@@ -93,6 +93,7 @@ def run_pipeline(
         webhook_url=config.webhook_url,
         webhook_timeout_seconds=config.webhook_timeout_seconds,
         print_to_stdout=print_to_stdout,
+        config=config,
     )
     return dispatcher.dispatch(report)
 
@@ -121,6 +122,16 @@ def run_multi_store_batch(
                 print(
                     f"[OK] ({store_cfg.store_name}) Alerta salvo em: {res.saved_file_path}"
                 )
+                if res.provider_used != "local_only":
+                    if res.webhook_sent:
+                        print(
+                            f"[OK] ({store_cfg.store_name}) WhatsApp enviado via '{res.provider_used}' (HTTP {res.webhook_status_code})."
+                        )
+                    else:
+                        print(
+                            f"[AVISO] ({store_cfg.store_name}) Falha no envio WhatsApp via '{res.provider_used}': {res.webhook_error}",
+                            file=sys.stderr,
+                        )
         except Exception as exc:
             err_msg = str(exc)
             errors.append((store_cfg.store_name, err_msg))

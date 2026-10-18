@@ -334,6 +334,70 @@ class TestMvpNexAlerts(unittest.TestCase):
             self.assertIn("Chave PIX: [84911112222]", results[0].message_text)
             self.assertIn("Chave PIX: [84933334444]", results[1].message_text)
 
+    def test_whatsapp_providers_dispatch(self) -> None:
+        """Valida o envio nativo para Evolution API, Z-API, Meta Cloud API e CallMeBot."""
+        from nex_alerts.domain.models import DailyDigestReport
+        from nex_alerts.notification.dispatcher import NotificationDispatcher
+
+        captured_requests = []
+
+        def fake_opener(req, timeout=15):
+            captured_requests.append(req)
+            resp = MagicMock()
+            resp.status = 200
+            resp.__enter__.return_value = resp
+            return resp
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_path = Path(tmp_dir)
+            report = DailyDigestReport(
+                generated_at=datetime(2026, 10, 18, 8, 0, 0),
+                store_name="Loja Zap",
+                pix_key="84999999999",
+                whatsapp_phone="(84) 98888-7777",
+            )
+
+            # 1. Evolution API
+            cfg_evo = AppConfig(
+                output_dir=tmp_path,
+                evolution_api_url="https://evo.exemplo.com",
+                evolution_api_instance="instancia1",
+                evolution_api_key="evo-secret",
+            )
+            res_evo = NotificationDispatcher(
+                config=cfg_evo, print_to_stdout=False, opener=fake_opener
+            ).dispatch(report)
+            self.assertEqual(res_evo.provider_used, "evolution")
+            self.assertTrue(res_evo.webhook_sent)
+            self.assertIn(
+                "/message/sendText/instancia1", captured_requests[-1].full_url
+            )
+
+            # 2. Z-API
+            cfg_zapi = AppConfig(
+                output_dir=tmp_path,
+                zapi_instance_url="https://api.z-api.io/instances/123/token/abc",
+                zapi_client_token="client-tok",
+            )
+            res_zapi = NotificationDispatcher(
+                config=cfg_zapi, print_to_stdout=False, opener=fake_opener
+            ).dispatch(report)
+            self.assertEqual(res_zapi.provider_used, "zapi")
+            self.assertTrue(res_zapi.webhook_sent)
+            self.assertTrue(captured_requests[-1].full_url.endswith("/send-text"))
+
+            # 3. CallMeBot
+            cfg_cmb = AppConfig(
+                output_dir=tmp_path,
+                callmebot_api_key="123456",
+            )
+            res_cmb = NotificationDispatcher(
+                config=cfg_cmb, print_to_stdout=False, opener=fake_opener
+            ).dispatch(report)
+            self.assertEqual(res_cmb.provider_used, "callmebot")
+            self.assertTrue(res_cmb.webhook_sent)
+            self.assertIn("phone=5584988887777", captured_requests[-1].full_url)
+
 
 if __name__ == "__main__":
     unittest.main()

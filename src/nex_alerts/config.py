@@ -57,10 +57,29 @@ class AppConfig:
     nex_web_email: str = ""
     nex_web_password: str = ""
 
-    # Saída e Notificação
+    # Saída e Notificação WhatsApp (Multi-Provedor Nativo)
     output_dir: Path = Path("./output/alertas_enviados")
+    whatsapp_provider: str = "auto"  # "auto", "evolution", "zapi", "meta", "callmebot", "webhook", "none"
+
+    # 1. Evolution API
+    evolution_api_url: str = ""
+    evolution_api_instance: str = ""
+    evolution_api_key: str = ""
+
+    # 2. Z-API
+    zapi_instance_url: str = ""  # Ex: https://api.z-api.io/instances/SUA_INSTANCIA/token/SEU_TOKEN
+    zapi_client_token: str = ""
+
+    # 3. WhatsApp Cloud API (Oficial Meta)
+    meta_phone_number_id: str = ""
+    meta_access_token: str = ""
+
+    # 4. CallMeBot (Envio gratuito para testes rápidos no celular)
+    callmebot_api_key: str = ""
+
+    # 5. Webhook HTTP Genérico (n8n, Make, Zapier)
     webhook_url: str = ""
-    webhook_timeout_seconds: int = 10
+    webhook_timeout_seconds: int = 15
 
     @classmethod
     def from_env(cls, env_file: str | Path | None = None) -> AppConfig:
@@ -98,8 +117,17 @@ class AppConfig:
             nex_web_email=os.getenv("NEX_WEB_EMAIL", "").strip(),
             nex_web_password=os.getenv("NEX_WEB_PASSWORD", "").strip(),
             output_dir=Path(os.getenv("OUTPUT_DIR", "./output/alertas_enviados")),
+            whatsapp_provider=os.getenv("WHATSAPP_PROVIDER", "auto").strip().lower(),
+            evolution_api_url=os.getenv("EVOLUTION_API_URL", "").strip().rstrip("/"),
+            evolution_api_instance=os.getenv("EVOLUTION_API_INSTANCE", "").strip(),
+            evolution_api_key=os.getenv("EVOLUTION_API_KEY", "").strip(),
+            zapi_instance_url=os.getenv("ZAPI_INSTANCE_URL", "").strip().rstrip("/"),
+            zapi_client_token=os.getenv("ZAPI_CLIENT_TOKEN", "").strip(),
+            meta_phone_number_id=os.getenv("META_PHONE_NUMBER_ID", "").strip(),
+            meta_access_token=os.getenv("META_ACCESS_TOKEN", "").strip(),
+            callmebot_api_key=os.getenv("CALLMEBOT_API_KEY", "").strip(),
             webhook_url=os.getenv("WEBHOOK_URL", "").strip(),
-            webhook_timeout_seconds=int(os.getenv("WEBHOOK_TIMEOUT_SECONDS", "10")),
+            webhook_timeout_seconds=int(os.getenv("WEBHOOK_TIMEOUT_SECONDS", "15")),
         )
 
 
@@ -139,13 +167,23 @@ def load_multi_store_configs(
         whatsapp_phone = str(
             item.get("whatsapp_phone") or base_config.whatsapp_phone
         ).strip()
-        mode = str(item.get("mode") or item.get("data_source_mode") or "nex_web").strip().lower()
+        mode = (
+            str(item.get("mode") or item.get("data_source_mode") or "nex_web")
+            .strip()
+            .lower()
+        )
         nex_email = str(item.get("nex_email") or item.get("nex_web_email") or "").strip()
         nex_password = str(
             item.get("nex_password") or item.get("nex_web_password") or ""
         ).strip()
         nex_token = str(item.get("nex_token") or item.get("nex_web_token") or "").strip()
         webhook_url = str(item.get("webhook_url") or base_config.webhook_url).strip()
+        callmebot_key = str(
+            item.get("callmebot_api_key") or base_config.callmebot_api_key
+        ).strip()
+        whatsapp_provider = str(
+            item.get("whatsapp_provider") or base_config.whatsapp_provider
+        ).strip().lower()
         margin_threshold = Decimal(
             str(item.get("margin_threshold", base_config.margin_threshold))
         )
@@ -161,6 +199,8 @@ def load_multi_store_configs(
             nex_web_password=nex_password,
             nex_web_token=nex_token,
             webhook_url=webhook_url,
+            callmebot_api_key=callmebot_key,
+            whatsapp_provider=whatsapp_provider,
             margin_threshold=margin_threshold,
         )
         configs.append(store_cfg)
