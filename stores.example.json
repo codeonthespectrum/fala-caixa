@@ -1,0 +1,20 @@
+[
+  {
+    "store_name": "Mercadinho do Primo",
+    "nex_email": "primo@exemplo.com",
+    "nex_password": "SENHA_DO_NEX_DO_PRIMO",
+    "pix_key": "84999999999",
+    "whatsapp_phone": "5584999999999",
+    "mode": "nex_web",
+    "active": true
+  },
+  {
+    "store_name": "Mercearia São José (Cliente 02)",
+    "nex_email": "saojose@exemplo.com",
+    "nex_password": "SENHA_DO_NEX_CLIENTE_2",
+    "pix_key": "12.345.678/0001-99",
+    "whatsapp_phone": "5584988888888",
+    "mode": "nex_web",
+    "active": true
+  }
+]

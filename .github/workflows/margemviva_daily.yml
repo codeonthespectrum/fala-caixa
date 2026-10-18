@@ -1,0 +1,69 @@
+name: "MargemViva — Alerta Diário Multi-Loja"
+
+on:
+  # Executa automaticamente todos os dias às 08:00 BRT (11:00 UTC)
+  schedule:
+    - cron: "0 11 * * *"
+  # Permite disparar manualmente com 1 clique pelo celular ou PC na aba Actions
+  workflow_dispatch:
+    inputs:
+      mode_override:
+        description: "Modo de execução (deixe vazio para usar nex_web / STORES_CONFIG_JSON, ou digite mock)"
+        required: false
+        default: "nex_web"
+
+jobs:
+  executar-alertas:
+    name: "Processar Lojas Ativas (Read-Only)"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Executar Suíte de Testes de Segurança (Read-Only Guard)
+        run: |
+          PYTHONPATH=src python3 -m unittest discover -s tests -p "test_*.py" -v
+
+      - name: Executar MargemViva para Lojas Configuradas
+        env:
+          DATA_SOURCE_MODE: ${{ inputs.mode_override || 'nex_web' }}
+          STORES_CONFIG_JSON: ${{ secrets.STORES_CONFIG_JSON }}
+          STORE_NAME: ${{ secrets.STORE_NAME || 'Minimercado' }}
+          PIX_KEY: ${{ secrets.PIX_KEY || '84999999999' }}
+          NEX_WEB_EMAIL: ${{ secrets.NEX_WEB_EMAIL }}
+          NEX_WEB_PASSWORD: ${{ secrets.NEX_WEB_PASSWORD }}
+          NEX_WEB_TOKEN: ${{ secrets.NEX_WEB_TOKEN }}
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+        run: |
+          PYTHONPATH=src python3 -m nex_alerts.main
+
+      - name: Publicar Resumo dos Alertas no Painel do GitHub Actions
+        if: always()
+        run: |
+          echo "## 📦 MargemViva — Relatório de Execução Diária" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if ls output/alertas_enviados/*.txt 1> /dev/null 2>&1; then
+            for f in output/alertas_enviados/*.txt; do
+              echo "### 📄 Arquivo: \`$(basename "$f")\`" >> $GITHUB_STEP_SUMMARY
+              echo '```text' >> $GITHUB_STEP_SUMMARY
+              cat "$f" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            done
+          else
+            echo "⚠️ Nenhum arquivo de alerta foi gerado nesta execução." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Salvar Arquivos de Alerta como Artefato (Histórico de 30 dias)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: alertas-margemviva-${{ github.run_number }}
+          path: output/alertas_enviados/
+          retention-days: 30

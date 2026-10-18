@@ -1,0 +1,27 @@
+# Byte-compiled / cache Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ambientes virtuais
+.venv/
+venv/
+env/
+
+# Segredos e credenciais locais (NUNCA subir para o Git!)
+.env
+.env.*
+!.env.example
+stores.json
+!stores.example.json
+
+# Saídas geradas e builds
+output/
+build/
+dist/
+*.spec
+
+# Sistema Operacional / IDEs
+.DS_Store
+.vscode/
+.idea/

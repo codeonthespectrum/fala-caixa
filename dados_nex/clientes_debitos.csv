@@ -1,0 +1,5 @@
+Código Cliente;Cliente;Valor Débito;Vencimento;Status;Última Compra;Pagamentos em Dia;Bom Pagador
+201;Marcos;R$ 142,00;08/09/2026;Em Aberto;15/10/2026;1;Não
+202;Dona Neide;R$ 85,50;13/09/2026;Em Aberto;14/09/2026;0;Não
+203;Seu Carlos;R$ 60,00;16/09/2026;Em Aberto;28/09/2026;8;Sim
+204;João Recente;R$ 50,00;03/10/2026;Em Aberto;16/10/2026;2;Não
