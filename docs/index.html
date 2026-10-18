@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MargemViva — Inteligência Diária no WhatsApp para Lojistas Nex</title>
+  <meta name="description" content="Proteja o lucro do seu mercadinho e controle o fiado sem trocar o Programa Nex. Receba um resumo diário inteligente direto no seu WhatsApp às 08h00." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #07130e;
+      --bg-card: #0e2018;
+      --bg-card-hover: #132a20;
+      --emerald-500: #10b981;
+      --emerald-400: #34d399;
+      --emerald-600: #059669;
+      --amber-400: #fbbf24;
+      --red-400: #f87171;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-subtle: rgba(52, 211, 153, 0.16);
+      --wa-bg: #0b141a;
+      --wa-header: #202c33;
+      --wa-bubble: #005c4b;
+      --wa-bubble-incoming: #202c33;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Ambient Glows */
+    .glow-top {
+      position: fixed;
+      top: -180px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 750px;
+      height: 420px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.18) 0%, rgba(7, 19, 14, 0) 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Navbar */
+    header {
+      padding: 20px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(7, 19, 14, 0.85);
+    }
+
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 800;
+      font-size: 1.35rem;
+      color: #fff;
+      text-decoration: none;
+      letter-spacing: -0.02em;
+    }
+
+    .logo-badge {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--emerald-400), var(--emerald-600));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.15rem;
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+    }
+
+    .logo span {
+      color: var(--emerald-400);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
+
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.92rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: #fff;
+    }
+
+    .btn-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, var(--emerald-500), var(--emerald-600));
+      color: #fff !important;
+      font-weight: 600;
+      padding: 11px 22px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-size: 0.92rem;
+      box-shadow: 0 6px 22px rgba(16, 185, 129, 0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 28px rgba(16, 185, 129, 0.45);
+    }
+
+    .btn-outline {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-subtle);
+      color: #fff;
+      font-weight: 600;
+      padding: 12px 24px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .btn-outline:hover {
+      background: rgba(52, 211, 153, 0.1);
+      border-color: var(--emerald-400);
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 72px 0 64px;
+      display: grid;
+      grid-template-columns: 1.12fr 0.88fr;
+      gap: 48px;
+      align-items: center;
+    }
+
+    .pill-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid var(--border-subtle);
+      color: var(--emerald-400);
+      font-size: 0.82rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: clamp(2.2rem, 4vw, 3.35rem);
+      line-height: 1.12;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 .highlight {
+      background: linear-gradient(90deg, #34d399, #a7f3d0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p.lead {
+      font-size: 1.12rem;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+      max-width: 560px;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-bottom: 36px;
+    }
+
+    .trust-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .trust-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .trust-item strong {
+      display: block;
+      color: #fff;
+      font-size: 0.9rem;
+    }
+
+    /* WhatsApp Phone Mockup */
+    .phone-frame {
+      background: #141c22;
+      border-radius: 36px;
+      padding: 12px;
+      border: 2px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 28px 60px rgba(0, 0, 0, 0.65), 0 0 40px rgba(16, 185, 129, 0.15);
+      max-width: 410px;
+      margin: 0 auto;
+    }
+
+    .phone-screen {
+      background: var(--wa-bg);
+      border-radius: 26px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .wa-topbar {
+      background: var(--wa-header);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .wa-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #10b981, #047857);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1rem;
+    }
+
+    .wa-contact-info h4 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #e9edef;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .wa-contact-info span {
+      font-size: 0.76rem;
+      color: #8696a0;
+    }
+
+    .wa-chat-area {
+      padding: 18px 14px;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 0);
+      background-size: 20px 20px;
+      min-height: 380px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .wa-date-chip {
+      align-self: center;
+      background: #182229;
+      color: #8696a0;
+      font-size: 0.72rem;
+      padding: 4px 12px;
+      border-radius: 8px;
+      margin-bottom: 4px;
+    }
+
+    .wa-message {
+      background: var(--wa-bubble-incoming);
+      color: #e9edef;
+      padding: 12px 14px;
+      border-radius: 0 12px 12px 12px;
+      font-size: 0.84rem;
+      line-height: 1.5;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+      position: relative;
+      white-space: pre-line;
+    }
+
+    .wa-message strong {
+      color: #fff;
+    }
+
+    .wa-time {
+      display: block;
+      text-align: right;
+      font-size: 0.68rem;
+      color: #8696a0;
+      margin-top: 6px;
+    }
+
+    /* Section Headings */
+    .section {
+      padding: 80px 0;
+    }
+
+    .section-header {
+      text-align: center;
+      max-width: 720px;
+      margin: 0 auto 52px;
+    }
+
+    .section-header h2 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: clamp(1.75rem, 3vw, 2.4rem);
+      font-weight: 800;
+      margin-bottom: 14px;
+      letter-spacing: -0.02em;
+    }
+
+    .section-header p {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+    }
+
+    /* Interactive Simulator Section */
+    .simulator-box {
+      background: linear-gradient(145deg, #0d2219, #091711);
+      border: 1px solid var(--border-subtle);
+      border-radius: 24px;
+      padding: 40px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      align-items: center;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+    }
+
+    .sim-controls h3 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.45rem;
+      margin-bottom: 10px;
+    }
+
+    .sim-controls p {
+      color: var(--text-muted);
+      font-size: 0.94rem;
+      margin-bottom: 24px;
+    }
+
+    .preset-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .preset-chip {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #e2e8f0;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .preset-chip:hover, .preset-chip.active {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: var(--emerald-400);
+      color: #fff;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group.full {
+      grid-column: 1 / -1;
+    }
+
+    .form-group label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #cbd5e1;
+    }
+
+    .form-group input {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 12px 14px;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus {
+      border-color: var(--emerald-400);
+    }
+
+    .sim-metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .metric-card {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 14px;
+      padding: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .metric-card span {
+      display: block;
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .metric-card strong {
+      font-size: 1.35rem;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    .status-danger {
+      color: var(--red-400);
+    }
+
+    .status-safe {
+      color: var(--emerald-400);
+    }
+
+    /* Fiado 3 Tiers Grid */
+    .tiers-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .tier-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 28px;
+      transition: transform 0.2s, border-color 0.2s;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .tier-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--emerald-400);
+    }
+
+    .tier-tag {
+      display: inline-block;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .tag-danger {
+      background: rgba(248, 113, 113, 0.15);
+      color: #fca5a5;
+      border: 1px solid rgba(248, 113, 113, 0.3);
+    }
+
+    .tag-warning {
+      background: rgba(251, 191, 36, 0.15);
+      color: #fde68a;
+      border: 1px solid rgba(251, 191, 36, 0.3);
+    }
+
+    .tag-safe {
+      background: rgba(52, 211, 153, 0.15);
+      color: #6ee7b7;
+      border: 1px solid rgba(52, 211, 153, 0.3);
+    }
+
+    .tier-card h3 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.3rem;
+      margin-bottom: 10px;
+    }
+
+    .tier-card p {
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      margin-bottom: 20px;
+    }
+
+    .tier-action {
+      background: rgba(0, 0, 0, 0.35);
+      border-left: 3px solid var(--emerald-400);
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 0.84rem;
+      color: #e2e8f0;
+    }
+
+    /* Security / Non-Invasive Guarantees */
+    .guarantees-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+
+    .guarantee-item {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 18px;
+      padding: 24px;
+    }
+
+    .guarantee-icon {
+      font-size: 1.65rem;
+      margin-bottom: 12px;
+    }
+
+    .guarantee-item h4 {
+      font-size: 1.02rem;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+
+    .guarantee-item p {
+      font-size: 0.86rem;
+      color: var(--text-muted);
+    }
+
+    /* Pioneer Invite Banner */
+    .pioneer-banner {
+      background: linear-gradient(135deg, #064e3b 0%, #0f172a 100%);
+      border: 1px solid var(--emerald-400);
+      border-radius: 28px;
+      padding: 56px 40px;
+      text-align: center;
+      max-width: 920px;
+      margin: 40px auto 80px;
+      box-shadow: 0 24px 60px rgba(16, 185, 129, 0.18);
+    }
+
+    .pioneer-banner h2 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: clamp(1.8rem, 3.2vw, 2.5rem);
+      margin-bottom: 16px;
+    }
+
+    .pioneer-banner p {
+      color: #cbd5e1;
+      max-width: 620px;
+      margin: 0 auto 30px;
+      font-size: 1.05rem;
+    }
+
+    footer {
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 32px 0;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 920px) {
+      .hero, .simulator-box, .tiers-grid, .guarantees-grid {
+        grid-template-columns: 1fr;
+      }
+      .nav-links {
+        display: none;
+      }
+      .trust-strip {
+        grid-template-columns: 1fr;
+      }
+      .simulator-box {
+        padding: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="glow-top"></div>
+
+  <header>
+    <div class="container nav-inner">
+      <a href="#" class="logo">
+        <div class="logo-badge">📈</div>
+        <div>Margem<span>Viva</span></div>
+      </a>
+      <nav class="nav-links">
+        <a href="#simulador">Simulador Ao Vivo</a>
+        <a href="#regua-fiado">Régua de Fiado</a>
+        <a href="#seguranca">Segurança no Nex</a>
+        <a href="#pioneiro">Programa Pioneiro</a>
+      </nav>
+      <a href="#pioneiro" class="btn-cta">Testar na Minha Loja →</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- HERO -->
+    <section class="hero">
+      <div>
+        <div class="pill-badge">✨ Camada de Inteligência para Lojistas Nex (Nextar)</div>
+        <h1>
+          O fornecedor subiu o custo na surdina? <span class="highlight">Seu WhatsApp avisa às 08h da manhã.</span>
+        </h1>
+        <p class="lead">
+          Sem trocar o seu sistema Nex, sem precisar abrir painéis complicados. O <strong>MargemViva</strong> vigia suas entradas de mercadoria e sua carteira de fiado todos os dias e entrega apenas o que você precisa ajustar na gôndola e no caixa.
+        </p>
+        <div class="hero-actions">
+          <a href="#simulador" class="btn-cta">🧪 Testar Simulador de Margem Agora</a>
+          <a href="#regua-fiado" class="btn-outline">Ver Régua Anti-Calote</a>
+        </div>
+        <div class="trust-strip">
+          <div class="trust-item">
+            <span>🔒</span>
+            <div>
+              <strong>100% Somente-Leitura</strong>
+              Zero risco de travar ou alterar o seu Nex.
+            </div>
+          </div>
+          <div class="trust-item">
+            <span>📲</span>
+            <div>
+              <strong>Direto no WhatsApp</strong>
+              Sem senha nova nem dashboard para olhar.
+            </div>
+          </div>
+          <div class="trust-item">
+            <span>🤝</span>
+            <div>
+              <strong>Respeito ao Cliente</strong>
+              Nunca cobra seu cliente sem sua permissão.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WHATSAPP PHONE PREVIEW -->
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <div class="wa-topbar">
+            <div class="wa-avatar">MV</div>
+            <div class="wa-contact-info">
+              <h4>MargemViva Alertas ✅</h4>
+              <span>online • resumo automático às 08:00</span>
+            </div>
+          </div>
+          <div class="wa-chat-area">
+            <div class="wa-date-chip">HOJE</div>
+            <div class="wa-message"><strong>📦 RESUMO INTELIGENTE DO CAIXA</strong>
+
+<strong>🚨 Reajuste de Margem Necessário (Entradas Recentes):</strong>
+• Óleo de Soja 900ml: Custo subiu para R$ 6,20. Margem caiu para 16%.
+👉 Sugestão de preço para manter 30%: <strong>R$ 8,90</strong> (Atual: R$ 7,40)
+• Açúcar Refinado 1kg: Custo subiu para R$ 2,80. Margem caiu para 25%.
+👉 Sugestão de preço para manter 30%: <strong>R$ 4,00</strong> (Atual: R$ 3,75)
+
+<strong>⚠️ Cobrança de Fiado (+30 dias):</strong>
+• <strong>[Atenção Caixa] Travar novo fiado:</strong>
+Marcos (R$ 142,00) — Comprou há 3 dias.
+• <strong>[Lembrete] Cliente sumido:</strong>
+Dona Neide (R$ 85,50) — Sem visitas há 34 dias.
+Chave PIX: [84999999999]
+• <strong>[Acompanhamento]:</strong>
+Seu Carlos (R$ 60,00) — Bom pagador habitual.<span class="wa-time">08:00 ✓✓</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INTERACTIVE SIMULATOR -->
+    <section id="simulador" class="section">
+      <div class="section-header">
+        <div class="pill-badge">🧪 Teste Você Mesmo</div>
+        <h2>Simulador Ao Vivo: Descubra a Margem Oculta</h2>
+        <p>Clique em um produto de exemplo ou digite o preço de custo da nota que chegou hoje e veja como o MargemViva calcula o preço exato para proteger seus 30% de margem.</p>
+      </div>
+
+      <div class="simulator-box">
+        <div class="sim-controls">
+          <h3>Simule uma Entrada de Mercadoria</h3>
+          <p>Altere os valores abaixo para ver a mensagem do WhatsApp atualizar em tempo real:</p>
+
+          <div class="preset-chips">
+            <button type="button" class="preset-chip active" onclick="setPreset('Açúcar Refinado 1kg', 2.80, 3.75, this)">🍬 Açúcar Refinado 1kg</button>
+            <button type="button" class="preset-chip" onclick="setPreset('Óleo de Soja 900ml', 6.20, 7.40, this)">🌻 Óleo de Soja 900ml</button>
+            <button type="button" class="preset-chip" onclick="setPreset('Biscoito Recheado', 2.50, 3.10, this)">🍪 Biscoito Recheado</button>
+            <button type="button" class="preset-chip" onclick="setPreset('Arroz Tipo 1 5kg (Margem Boa)', 19.50, 30.00, this)">🌾 Arroz 5kg (Saudável)</button>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group full">
+              <label for="simProduct">Nome do Produto no Nex</label>
+              <input type="text" id="simProduct" value="Açúcar Refinado 1kg" oninput="updateSimulator()" />
+            </div>
+            <div class="form-group">
+              <label for="simCost">Novo Custo na Nota (R$)</label>
+              <input type="number" id="simCost" step="0.05" min="0.10" value="2.80" oninput="updateSimulator()" />
+            </div>
+            <div class="form-group">
+              <label for="simSale">Preço Atual na Gôndola (R$)</label>
+              <input type="number" id="simSale" step="0.05" min="0.10" value="3.75" oninput="updateSimulator()" />
+            </div>
+          </div>
+
+          <div class="sim-metrics">
+            <div class="metric-card">
+              <span>Margem Atual Real</span>
+              <strong id="metricMargin" class="status-danger">25% (Abaixo de 30%)</strong>
+            </div>
+            <div class="metric-card">
+              <span>Preço Sugerido (p/ 30%)</span>
+              <strong id="metricSuggested" class="status-safe">R$ 4,00</strong>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="phone-frame" style="max-width: 100%;">
+            <div class="phone-screen">
+              <div class="wa-topbar">
+                <div class="wa-avatar">MV</div>
+                <div class="wa-contact-info">
+                  <h4>Prévia Instantânea no Seu Celular</h4>
+                  <span>Gerado pelo motor determinístico MargemViva</span>
+                </div>
+              </div>
+              <div class="wa-chat-area" style="min-height: 230px; justify-content: center;">
+                <div id="simWhatsappBubble" class="wa-message"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FIADO 3 TIERS -->
+    <section id="regua-fiado" class="section">
+      <div class="section-header">
+        <div class="pill-badge">🛡️ Funcionalidade B: Anti-Calote</div>
+        <h2>Nem todo cliente atrasado deve ser cobrado igual</h2>
+        <p>O MargemViva cruza os débitos vencidos há mais de 30 dias com a data da última compra na loja para separar quem sumiu, quem está abusando do caixa e quem merece paciência.</p>
+      </div>
+
+      <div class="tiers-grid">
+        <div class="tier-card">
+          <div>
+            <span class="tier-tag tag-danger">Nível 2 • Prioridade no Caixa</span>
+            <h3>O "Cara-de-Pau"</h3>
+            <p>Está devendo há mais de 30 dias, mas <strong>continua comprando na loja nos últimos 7 a 15 dias</strong> como se nada tivesse acontecido.</p>
+          </div>
+          <div class="tier-action">
+            <strong>Ação no Alerta:</strong><br/>
+            <code>[Atenção Caixa] Travar novo fiado</code> imediatamente até regularizar a nota antiga.
+          </div>
+        </div>
+
+        <div class="tier-card">
+          <div>
+            <span class="tier-tag tag-warning">Nível 1 • Recuperação Rápida</span>
+            <h3>O Cliente "Sumido"</h3>
+            <p>Tem conta vencida há mais de 30 dias e <strong>parou de pisar na mercearia há mais de 1 mês</strong> por vergonha ou esquecimento.</p>
+          </div>
+          <div class="tier-action">
+            <strong>Ação no Alerta:</strong><br/>
+            Envia lembrete para você no WhatsApp já com a sua <strong>Chave PIX pronta para copiar e encaminhar</strong>.
+          </div>
+        </div>
+
+        <div class="tier-card">
+          <div>
+            <span class="tier-tag tag-safe">Nível 3 • Zero Atrito</span>
+            <h3>O Bom Pagador Habitual</h3>
+            <p>Passou de 30 dias de atraso pontualmente este mês, mas possui <strong>histórico recorrente de pagamentos em dia</strong> na loja.</p>
+          </div>
+          <div class="tier-action">
+            <strong>Ação no Alerta:</strong><br/>
+            <code>[Acompanhamento]</code> brando, evitando cobrança dura e preservando a amizade com o cliente fiel.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GUARANTEES -->
+    <section id="seguranca" class="section">
+      <div class="section-header">
+        <div class="pill-badge">⚙️ Feito para Quem Usa Nex</div>
+        <h2>Por que o MargemViva não dá trabalho para você?</h2>
+        <p>Desenhado especificamente para a rotina corrida de dono de mercadinho e mercearia.</p>
+      </div>
+
+      <div class="guarantees-grid">
+        <div class="guarantee-item">
+          <div class="guarantee-icon">🚫</div>
+          <h4>Não Substitui o Nex</h4>
+          <p>Você e seu caixa continuam usando o Programa Nex exatamente como fazem hoje. Nada muda na rotina da loja.</p>
+        </div>
+        <div class="guarantee-item">
+          <div class="guarantee-icon">🔐</div>
+          <h4>Acesso 100% Leitura</h4>
+          <p>Trava de segurança no código: o MargemViva apenas lê os cadastros para calcular suas margens, sem jamais alterar ou apagar nada.</p>
+        </div>
+        <div class="guarantee-item">
+          <div class="guarantee-icon">⚡</div>
+          <h4>Zero Painel Web</h4>
+          <p>Você não precisa lembrar de entrar em site nem decorar gráficos. Às 08h00 o resumo chega pronto no seu WhatsApp.</p>
+        </div>
+        <div class="guarantee-item">
+          <div class="guarantee-icon">🤫</div>
+          <h4>Você no Controle</h4>
+          <p>O alerta vai apenas para o WhatsApp do dono da loja. Nenhuma mensagem é enviada para seus clientes sem você decidir.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PIONEER CTA -->
+    <section id="pioneiro" class="pioneer-banner">
+      <div class="pill-badge" style="background: rgba(255,255,255,0.12); color: #fff;">🚀 Convite Especial — Loja Pioneira</div>
+      <h2>Quer ativar o MargemViva gratuitamente no seu Mercadinho?</h2>
+      <p>
+        Estamos selecionando as primeiras mercearias parceiras que utilizam o sistema <strong>Nex (Nextar)</strong> para testar o resumo diário automático no WhatsApp como <strong>Parceiros Pioneiros (100% Gratuito)</strong>.
+      </p>
+      <a id="whatsappInviteBtn" href="https://wa.me/?text=Oi!%20Vi%20a%20p%C3%A1gina%20do%20MargemViva%20e%20quero%20testar%20os%20alertas%20do%20Nex%20no%20meu%20WhatsApp!" target="_blank" rel="noopener noreferrer" class="btn-cta" style="font-size: 1.05rem; padding: 15px 32px;">
+        📲 Quero Ativar o Teste Gratuito no Meu Nex
+      </a>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p><strong>MargemViva</strong> — Camada de Inteligência Operacional para Lojistas Nex (Nextar). Todos os direitos reservados.</p>
+    </div>
+  </footer>
+
+  <script>
+    function formatBRL(val) {
+      return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function roundUpToTenCents(val) {
+      const normalized = Math.round(val * 10000) / 10000;
+      return Math.ceil(normalized * 10) / 10;
+    }
+
+    function setPreset(name, cost, sale, btnEl) {
+      document.getElementById('simProduct').value = name;
+      document.getElementById('simCost').value = cost.toFixed(2);
+      document.getElementById('simSale').value = sale.toFixed(2);
+      document.querySelectorAll('.preset-chip').forEach(b => b.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+      updateSimulator();
+    }
+
+    function updateSimulator() {
+      const name = document.getElementById('simProduct').value.trim() || 'Produto Exemplo';
+      const cost = parseFloat(document.getElementById('simCost').value) || 0;
+      const sale = parseFloat(document.getElementById('simSale').value) || 0;
+
+      const marginEl = document.getElementById('metricMargin');
+      const suggestedEl = document.getElementById('metricSuggested');
+      const bubbleEl = document.getElementById('simWhatsappBubble');
+
+      if (cost <= 0 || sale <= 0) {
+        marginEl.textContent = '—';
+        suggestedEl.textContent = '—';
+        bubbleEl.innerHTML = 'Digite um custo e preço de venda válidos para simular.';
+        return;
+      }
+
+      const marginRatio = (sale - cost) / sale;
+      const marginPct = Math.round(marginRatio * 100);
+      const suggestedPrice = roundUpToTenCents(cost / 0.70);
+
+      suggestedEl.textContent = formatBRL(suggestedPrice);
+
+      if (marginRatio < 0.30) {
+        marginEl.textContent = `${marginPct}% (Alerta < 30%)`;
+        marginEl.className = 'status-danger';
+        bubbleEl.innerHTML = `<strong>📦 RESUMO INTELIGENTE DO CAIXA</strong>
+
+<strong>🚨 Reajuste de Margem Necessário (Entradas Recentes):</strong>
+• ${name}: Custo subiu para <strong>${formatBRL(cost)}</strong>. Margem caiu para <strong>${marginPct}%</strong>.
+👉 Sugestão de preço para manter 30%: <strong>${formatBRL(suggestedPrice)}</strong> (Atual: ${formatBRL(sale)})<span class="wa-time">08:00 ✓✓</span>`;
+      } else {
+        marginEl.textContent = `${marginPct}% (Saudável ≥ 30%)`;
+        marginEl.className = 'status-safe';
+        bubbleEl.innerHTML = `<strong>📦 RESUMO INTELIGENTE DO CAIXA</strong>
+
+✅ <strong>${name}</strong> está com margem saudável de <strong>${marginPct}%</strong> (Custo: ${formatBRL(cost)} | Venda: ${formatBRL(sale)}).
+Nenhum reajuste de gôndola necessário hoje!<span class="wa-time">08:00 ✓✓</span>`;
+      }
+    }
+
+    updateSimulator();
+  </script>
+</body>
+</html>
