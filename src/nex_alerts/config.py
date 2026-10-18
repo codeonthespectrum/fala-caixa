@@ -74,10 +74,15 @@ class AppConfig:
     meta_phone_number_id: str = ""
     meta_access_token: str = ""
 
-    # 4. CallMeBot (Envio gratuito para testes rápidos no celular)
+    # 4. Green-API (Plano Developer Gratuito permanente para até 3 números)
+    greenapi_id_instance: str = ""
+    greenapi_api_token: str = ""
+    greenapi_api_url: str = "https://api.green-api.com"
+
+    # 5. CallMeBot
     callmebot_api_key: str = ""
 
-    # 5. Webhook HTTP Genérico (n8n, Make, Zapier)
+    # 6. Webhook HTTP Genérico (n8n, Make, Zapier)
     webhook_url: str = ""
     webhook_timeout_seconds: int = 15
 
@@ -125,6 +130,11 @@ class AppConfig:
             zapi_client_token=os.getenv("ZAPI_CLIENT_TOKEN", "").strip(),
             meta_phone_number_id=os.getenv("META_PHONE_NUMBER_ID", "").strip(),
             meta_access_token=os.getenv("META_ACCESS_TOKEN", "").strip(),
+            greenapi_id_instance=os.getenv("GREENAPI_ID_INSTANCE", "").strip(),
+            greenapi_api_token=os.getenv("GREENAPI_API_TOKEN", "").strip(),
+            greenapi_api_url=os.getenv(
+                "GREENAPI_API_URL", "https://api.green-api.com"
+            ).strip().rstrip("/"),
             callmebot_api_key=os.getenv("CALLMEBOT_API_KEY", "").strip(),
             webhook_url=os.getenv("WEBHOOK_URL", "").strip(),
             webhook_timeout_seconds=int(os.getenv("WEBHOOK_TIMEOUT_SECONDS", "15")),
@@ -178,6 +188,12 @@ def load_multi_store_configs(
         ).strip()
         nex_token = str(item.get("nex_token") or item.get("nex_web_token") or "").strip()
         webhook_url = str(item.get("webhook_url") or base_config.webhook_url).strip()
+        greenapi_id = str(
+            item.get("greenapi_id_instance") or base_config.greenapi_id_instance
+        ).strip()
+        greenapi_token = str(
+            item.get("greenapi_api_token") or base_config.greenapi_api_token
+        ).strip()
         callmebot_key = str(
             item.get("callmebot_api_key") or base_config.callmebot_api_key
         ).strip()
@@ -199,6 +215,8 @@ def load_multi_store_configs(
             nex_web_password=nex_password,
             nex_web_token=nex_token,
             webhook_url=webhook_url,
+            greenapi_id_instance=greenapi_id,
+            greenapi_api_token=greenapi_token,
             callmebot_api_key=callmebot_key,
             whatsapp_provider=whatsapp_provider,
             margin_threshold=margin_threshold,

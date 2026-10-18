@@ -398,6 +398,22 @@ class TestMvpNexAlerts(unittest.TestCase):
             self.assertTrue(res_cmb.webhook_sent)
             self.assertIn("phone=5584988887777", captured_requests[-1].full_url)
 
+            # 4. Green-API
+            cfg_green = AppConfig(
+                output_dir=tmp_path,
+                greenapi_id_instance="7103999999",
+                greenapi_api_token="green-token-abc",
+            )
+            res_green = NotificationDispatcher(
+                config=cfg_green, print_to_stdout=False, opener=fake_opener
+            ).dispatch(report)
+            self.assertEqual(res_green.provider_used, "greenapi")
+            self.assertTrue(res_green.webhook_sent)
+            self.assertIn(
+                "/waInstance7103999999/sendMessage/green-token-abc",
+                captured_requests[-1].full_url,
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

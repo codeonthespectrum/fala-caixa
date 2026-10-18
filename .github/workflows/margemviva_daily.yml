@@ -43,6 +43,9 @@ jobs:
           EVOLUTION_API_KEY: ${{ secrets.EVOLUTION_API_KEY }}
           ZAPI_INSTANCE_URL: ${{ secrets.ZAPI_INSTANCE_URL }}
           ZAPI_CLIENT_TOKEN: ${{ secrets.ZAPI_CLIENT_TOKEN }}
+          GREENAPI_ID_INSTANCE: ${{ secrets.GREENAPI_ID_INSTANCE }}
+          GREENAPI_API_TOKEN: ${{ secrets.GREENAPI_API_TOKEN }}
+          GREENAPI_API_URL: ${{ secrets.GREENAPI_API_URL }}
           META_PHONE_NUMBER_ID: ${{ secrets.META_PHONE_NUMBER_ID }}
           META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
           CALLMEBOT_API_KEY: ${{ secrets.CALLMEBOT_API_KEY }}

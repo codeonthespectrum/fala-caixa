@@ -101,6 +101,8 @@ class NotificationDispatcher:
             return "evolution"
         if self.config.zapi_instance_url:
             return "zapi"
+        if self.config.greenapi_id_instance and self.config.greenapi_api_token:
+            return "greenapi"
         if self.config.meta_phone_number_id and self.config.meta_access_token:
             return "meta"
         if self.config.callmebot_api_key:
@@ -108,6 +110,29 @@ class NotificationDispatcher:
         if self.webhook_url:
             return "webhook"
         return "none"
+
+    def _send_via_greenapi(self, phone: str, message_text: str) -> int:
+        assert self.config is not None
+        if not phone:
+            raise ValueError("WHATSAPP_PHONE é obrigatório para envio via Green-API.")
+        base = self.config.greenapi_api_url or "https://api.green-api.com"
+        url = (
+            f"{base}/waInstance{self.config.greenapi_id_instance}"
+            f"/sendMessage/{self.config.greenapi_api_token}"
+        )
+        chat_id = phone if "@" in phone else f"{phone}@c.us"
+        body = json.dumps({"chatId": chat_id, "message": message_text}).encode("utf-8")
+        req = urllib.request.Request(
+            url=url,
+            data=body,
+            headers={
+                "Content-Type": "application/json; charset=utf-8",
+                "User-Agent": "Mozilla/5.0 (MargemViva/0.1)",
+            },
+            method="POST",
+        )
+        with self.opener(req, timeout=self.webhook_timeout_seconds) as resp:
+            return int(resp.status)
 
     def _send_via_evolution(self, phone: str, message_text: str) -> int:
         assert self.config is not None
@@ -245,6 +270,8 @@ class NotificationDispatcher:
                 webhook_status_code = self._send_via_evolution(phone, message_text)
             elif provider == "zapi":
                 webhook_status_code = self._send_via_zapi(phone, message_text)
+            elif provider == "greenapi":
+                webhook_status_code = self._send_via_greenapi(phone, message_text)
             elif provider == "meta":
                 webhook_status_code = self._send_via_meta(phone, message_text)
             elif provider == "callmebot":
