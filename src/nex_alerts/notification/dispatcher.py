@@ -111,16 +111,58 @@ class NotificationDispatcher:
             return "webhook"
         return "none"
 
+    def _resolve_greenapi_chat_id(self, base: str, phone: str) -> str:
+        """Resolve o chatId exato do WhatsApp no Brasil (com ou sem o 9º dígito após o DDD)."""
+        assert self.config is not None
+        if "@" in phone:
+            return phone
+
+        candidates = [phone]
+        # No Brasil (55 + 2 dígitos DDD): se tem 13 dígitos (com 9), testa também com 12 (sem 9) e vice-versa
+        if phone.startswith("55") and len(phone) == 13 and phone[4] == "9":
+            candidates.append(phone[:4] + phone[5:])
+        elif phone.startswith("55") and len(phone) == 12:
+            candidates.append(phone[:4] + "9" + phone[4:])
+
+        check_url = (
+            f"{base}/waInstance{self.config.greenapi_id_instance}"
+            f"/checkWhatsapp/{self.config.greenapi_api_token}"
+        )
+        for cand in candidates:
+            try:
+                body = json.dumps({"phoneNumber": int(cand)}).encode("utf-8")
+                req = urllib.request.Request(
+                    url=check_url,
+                    data=body,
+                    headers={
+                        "Content-Type": "application/json; charset=utf-8",
+                        "User-Agent": "Mozilla/5.0 (MargemViva/0.1)",
+                    },
+                    method="POST",
+                )
+                with self.opener(req, timeout=self.webhook_timeout_seconds) as resp:
+                    raw = resp.read().decode("utf-8")
+                    data = json.loads(raw) if raw else {}
+                    if isinstance(data, dict) and data.get("existsWhatsapp"):
+                        return str(data.get("chatId") or f"{cand}@c.us")
+            except Exception:
+                continue
+
+        # Fallback: para DDDs >= 30 no Brasil, o ID interno do WhatsApp costuma ter 12 dígitos
+        if phone.startswith("55") and len(phone) == 13 and int(phone[2:4]) >= 30:
+            return f"{phone[:4]}{phone[5:]}@c.us"
+        return f"{phone}@c.us"
+
     def _send_via_greenapi(self, phone: str, message_text: str) -> int:
         assert self.config is not None
         if not phone:
             raise ValueError("WHATSAPP_PHONE é obrigatório para envio via Green-API.")
         base = self.config.greenapi_api_url or "https://api.green-api.com"
+        chat_id = self._resolve_greenapi_chat_id(base, phone)
         url = (
             f"{base}/waInstance{self.config.greenapi_id_instance}"
             f"/sendMessage/{self.config.greenapi_api_token}"
         )
-        chat_id = phone if "@" in phone else f"{phone}@c.us"
         body = json.dumps({"chatId": chat_id, "message": message_text}).encode("utf-8")
         req = urllib.request.Request(
             url=url,
