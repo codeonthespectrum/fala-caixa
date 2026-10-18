@@ -879,7 +879,7 @@ Seu Carlos (R$ 60,00) — Bom pagador habitual.<span class="wa-time">08:00 ✓�
     </section>
 
     <!-- PIONEER CTA -->
-    <section id="pioneiro" class="pioneer-banner">
+    <section id="pioneiro" class="pioneer-banner" style="margin-bottom: 40px;">
       <div class="pill-badge" style="background: rgba(255,255,255,0.12); color: #fff;">🚀 Convite Especial — Loja Pioneira</div>
       <h2>Quer ativar o MargemViva gratuitamente no seu Mercadinho?</h2>
       <p>
@@ -888,6 +888,28 @@ Seu Carlos (R$ 60,00) — Bom pagador habitual.<span class="wa-time">08:00 ✓�
       <a id="whatsappInviteBtn" href="https://wa.me/?text=Oi!%20Vi%20a%20p%C3%A1gina%20do%20MargemViva%20e%20quero%20testar%20os%20alertas%20do%20Nex%20no%20meu%20WhatsApp!" target="_blank" rel="noopener noreferrer" class="btn-cta" style="font-size: 1.05rem; padding: 15px 32px;">
         📲 Quero Ativar o Teste Gratuito no Meu Nex
       </a>
+    </section>
+
+    <!-- OTHER SYSTEMS CTA ("Não usa sistemas Nextar?") -->
+    <section id="outros-sistemas" style="max-width: 920px; margin: 0 auto 80px; background: rgba(255, 255, 255, 0.03); border: 1px dashed rgba(52, 211, 153, 0.35); border-radius: 24px; padding: 36px 32px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 24px;">
+      <div style="flex: 1 1 380px;">
+        <div class="pill-badge" style="margin-bottom: 10px;">🔌 Expansão para Novos PDVs</div>
+        <h3 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.45rem; margin-bottom: 8px;">Não usa sistemas Nextar (Nex)?</h3>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">
+          Usa outro sistema no caixa do seu mercadinho (como Bling, Omie, Hiper, MarketUP, SysPDV ou planilhas) e também quer receber os alertas de margem e fiado no WhatsApp? Conta pra gente qual você usa para adaptarmos para a sua loja!
+        </p>
+      </div>
+      <div style="flex: 1 1 300px; display: flex; flex-direction: column; gap: 10px;">
+        <input
+          type="text"
+          id="otherErpInput"
+          placeholder="Qual sistema você usa hoje? (ex: Hiper, Bling...)"
+          style="background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 12px; padding: 13px 16px; color: #fff; font-size: 0.92rem; outline: none;"
+        />
+        <button type="button" onclick="sendOtherErpWhatsApp()" class="btn-outline" style="justify-content: center; width: 100%; cursor: pointer; border-color: var(--emerald-400); color: var(--emerald-400);">
+          💬 Quero o MargemViva no Meu Sistema →
+        </button>
+      </div>
     </section>
   </main>
 
@@ -954,6 +976,14 @@ Seu Carlos (R$ 60,00) — Bom pagador habitual.<span class="wa-time">08:00 ✓�
 ✅ <strong>${name}</strong> está com margem saudável de <strong>${marginPct}%</strong> (Custo: ${formatBRL(cost)} | Venda: ${formatBRL(sale)}).
 Nenhum reajuste de gôndola necessário hoje!<span class="wa-time">08:00 ✓✓</span>`;
       }
+    }
+
+    function sendOtherErpWhatsApp() {
+      const erpVal = document.getElementById('otherErpInput').value.trim();
+      const msg = erpVal
+        ? `Oi! Vi a página do MargemViva. Não uso o Nex hoje (uso o sistema "${erpVal}"), mas tenho interesse em receber os alertas no meu WhatsApp!`
+        : `Oi! Vi a página do MargemViva. Uso outro sistema no meu comércio e tenho interesse em receber os alertas no meu WhatsApp!`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
     }
 
     updateSimulator();
