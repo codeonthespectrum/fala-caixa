@@ -25,6 +25,21 @@ class StockEntry:
     entry_date: datetime
     cost_price: Decimal
     sale_price: Decimal
+    current_stock: Decimal | None = None
+    min_stock: Decimal | None = None
+    active: bool = True
+    has_stock: bool = True
+    stock_control: bool = True
+
+
+@dataclass(frozen=True)
+class LowStockAlertItem:
+    """Item classificado com estoque baixo ou zerado (Funcionalidade C: Reposição)."""
+
+    product_id: str
+    product_name: str
+    current_stock: Decimal
+    min_stock: Decimal
 
 
 @dataclass(frozen=True)
@@ -78,8 +93,9 @@ class DailyDigestReport:
     whatsapp_phone: str = ""
     margin_alerts: list[MarginAlertItem] = field(default_factory=list)
     fiado_alerts: list[FiadoAlertItem] = field(default_factory=list)
+    low_stock_alerts: list[LowStockAlertItem] = field(default_factory=list)
 
     @property
     def has_alerts(self) -> bool:
-        """Retorna True se houver pelo menos um alerta de margem ou de fiado."""
-        return bool(self.margin_alerts or self.fiado_alerts)
+        """Retorna True se houver pelo menos um alerta de margem, fiado ou estoque baixo."""
+        return bool(self.margin_alerts or self.fiado_alerts or self.low_stock_alerts)

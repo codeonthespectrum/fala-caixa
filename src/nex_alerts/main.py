@@ -15,7 +15,10 @@ from nex_alerts.collectors.nex_web_collector import NexWebReadOnlyCollector
 from nex_alerts.config import AppConfig, load_multi_store_configs
 from nex_alerts.domain.models import DailyDigestReport
 from nex_alerts.engine.fiado_analyzer import analyze_fiado_debts
-from nex_alerts.engine.margin_analyzer import analyze_margin_entries
+from nex_alerts.engine.margin_analyzer import (
+    analyze_low_stock_entries,
+    analyze_margin_entries,
+)
 from nex_alerts.notification.dispatcher import DispatchResult, NotificationDispatcher
 
 
@@ -69,6 +72,8 @@ def run_pipeline(
         rounding_step=config.price_rounding_step,
     )
 
+    low_stock_alerts = analyze_low_stock_entries(entries=stock_entries)
+
     fiado_alerts = analyze_fiado_debts(
         records=customer_debts,
         pix_key=config.pix_key,
@@ -86,6 +91,7 @@ def run_pipeline(
         whatsapp_phone=config.whatsapp_phone,
         margin_alerts=margin_alerts,
         fiado_alerts=fiado_alerts,
+        low_stock_alerts=low_stock_alerts,
     )
 
     dispatcher = NotificationDispatcher(

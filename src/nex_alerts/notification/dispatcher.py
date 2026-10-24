@@ -23,7 +23,10 @@ import urllib.request
 
 from nex_alerts.config import AppConfig
 from nex_alerts.domain.models import DailyDigestReport
-from nex_alerts.notification.formatter import format_daily_digest
+from nex_alerts.notification.formatter import (
+    format_daily_digest,
+    format_individual_fiado_message,
+)
 
 
 def _json_default_serializer(obj: Any) -> Any:
@@ -75,6 +78,8 @@ class NotificationDispatcher:
         )
         self.print_to_stdout = print_to_stdout
         self.opener = opener or urllib.request.urlopen
+        self._greenapi_chat_id_cache: dict[str, str] = {}
+        self._greenapi_state_checked: bool = False
 
     def build_webhook_payload(
         self, report: DailyDigestReport, message_text: str
@@ -116,6 +121,8 @@ class NotificationDispatcher:
         assert self.config is not None
         if "@" in phone:
             return phone
+        if phone in self._greenapi_chat_id_cache:
+            return self._greenapi_chat_id_cache[phone]
 
         candidates = [phone]
         # No Brasil (55 + 2 dígitos DDD): se tem 13 dígitos (com 9), testa também com 12 (sem 9) e vice-versa
@@ -144,14 +151,19 @@ class NotificationDispatcher:
                     raw = resp.read().decode("utf-8")
                     data = json.loads(raw) if raw else {}
                     if isinstance(data, dict) and data.get("existsWhatsapp"):
-                        return str(data.get("chatId") or f"{cand}@c.us")
+                        resolved = str(data.get("chatId") or f"{cand}@c.us")
+                        self._greenapi_chat_id_cache[phone] = resolved
+                        return resolved
             except Exception:
                 continue
 
         # Fallback: para DDDs >= 30 no Brasil, o ID interno do WhatsApp costuma ter 12 dígitos
         if phone.startswith("55") and len(phone) == 13 and int(phone[2:4]) >= 30:
-            return f"{phone[:4]}{phone[5:]}@c.us"
-        return f"{phone}@c.us"
+            fallback_id = f"{phone[:4]}{phone[5:]}@c.us"
+        else:
+            fallback_id = f"{phone}@c.us"
+        self._greenapi_chat_id_cache[phone] = fallback_id
+        return fallback_id
 
     def _send_via_greenapi(self, phone: str, message_text: str) -> int:
         assert self.config is not None
@@ -159,34 +171,36 @@ class NotificationDispatcher:
             raise ValueError("WHATSAPP_PHONE é obrigatório para envio via Green-API.")
         base = self.config.greenapi_api_url or "https://api.green-api.com"
 
-        # Verifica se a instância do Green-API está autorizada (conectada ao WhatsApp)
-        state_url = (
-            f"{base}/waInstance{self.config.greenapi_id_instance}"
-            f"/getStateInstance/{self.config.greenapi_api_token}"
-        )
-        try:
-            state_req = urllib.request.Request(
-                url=state_url,
-                headers={"User-Agent": "Mozilla/5.0 (MargemViva/0.1)"},
-                method="GET",
+        # Verifica se a instância do Green-API está autorizada (conectada ao WhatsApp) apenas 1x por sessão
+        if not self._greenapi_state_checked:
+            self._greenapi_state_checked = True
+            state_url = (
+                f"{base}/waInstance{self.config.greenapi_id_instance}"
+                f"/getStateInstance/{self.config.greenapi_api_token}"
             )
-            with self.opener(state_req, timeout=self.webhook_timeout_seconds) as s_resp:
-                raw_state = s_resp.read()
-                if isinstance(raw_state, bytes):
-                    raw_state = raw_state.decode("utf-8")
-                state_data = (
-                    json.loads(raw_state)
-                    if isinstance(raw_state, str) and raw_state.strip()
-                    else {}
+            try:
+                state_req = urllib.request.Request(
+                    url=state_url,
+                    headers={"User-Agent": "Mozilla/5.0 (MargemViva/0.1)"},
+                    method="GET",
                 )
-                state_val = state_data.get("stateInstance") if isinstance(state_data, dict) else None
-                if state_val and state_val != "authorized":
-                    raise RuntimeError(
-                        f"Instância Green-API desconectada no WhatsApp (stateInstance='{state_val}'). "
-                        "Escaneie o QR Code no painel console.green-api.com."
+                with self.opener(state_req, timeout=self.webhook_timeout_seconds) as s_resp:
+                    raw_state = s_resp.read()
+                    if isinstance(raw_state, bytes):
+                        raw_state = raw_state.decode("utf-8")
+                    state_data = (
+                        json.loads(raw_state)
+                        if isinstance(raw_state, str) and raw_state.strip()
+                        else {}
                     )
-        except urllib.error.HTTPError:
-            pass
+                    state_val = state_data.get("stateInstance") if isinstance(state_data, dict) else None
+                    if state_val and state_val != "authorized":
+                        raise RuntimeError(
+                            f"Instância Green-API desconectada no WhatsApp (stateInstance='{state_val}'). "
+                            "Escaneie o QR Code no painel console.green-api.com."
+                        )
+            except urllib.error.HTTPError:
+                pass
 
         chat_id = self._resolve_greenapi_chat_id(base, phone)
         url = (
@@ -295,14 +309,45 @@ class NotificationDispatcher:
         with self.opener(req, timeout=self.webhook_timeout_seconds) as resp:
             return int(resp.status)
 
+    def _send_single_text(self, provider: str, phone: str, text: str) -> int:
+        """Envia uma única mensagem de texto pelo provedor selecionado."""
+        if provider == "evolution":
+            return self._send_via_evolution(phone, text)
+        if provider == "zapi":
+            return self._send_via_zapi(phone, text)
+        if provider == "greenapi":
+            return self._send_via_greenapi(phone, text)
+        if provider == "meta":
+            return self._send_via_meta(phone, text)
+        if provider == "callmebot":
+            return self._send_via_callmebot(phone, text)
+        raise ValueError(f"Provedor WhatsApp desconhecido: '{provider}'")
+
     def dispatch(self, report: DailyDigestReport) -> DispatchResult:
-        """Formata o relatório, salva em disco, exibe no terminal e envia para o WhatsApp configurado."""
+        """Formata o relatório, salva em disco, exibe no terminal e envia o resumo + mensagens individuais de fiado."""
         message_text = format_daily_digest(report)
+        individual_fiado_messages = [
+            format_individual_fiado_message(
+                item=f_item,
+                store_name=report.store_name,
+                fallback_pix_key=report.pix_key,
+            )
+            for f_item in report.fiado_alerts
+        ]
+
+        full_log_text = message_text
+        if individual_fiado_messages:
+            separator_card = "\n\n" + ("-" * 45) + "\n"
+            full_log_text = (
+                message_text
+                + separator_card
+                + separator_card.join(individual_fiado_messages)
+            )
 
         if self.print_to_stdout:
             separator = "=" * 60
             print(f"\n{separator}")
-            print(message_text)
+            print(full_log_text)
             print(f"{separator}\n")
 
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -316,8 +361,9 @@ class NotificationDispatcher:
         txt_path = self.output_dir / f"alerta_{store_slug}_{timestamp_slug}.txt"
         json_path = self.output_dir / f"alerta_{store_slug}_{timestamp_slug}.json"
 
-        txt_path.write_text(message_text, encoding="utf-8")
+        txt_path.write_text(full_log_text, encoding="utf-8")
         payload = self.build_webhook_payload(report, message_text)
+        payload["individual_fiado_messages"] = individual_fiado_messages
         json_bytes = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
         json_path.write_bytes(json_bytes)
 
@@ -338,20 +384,16 @@ class NotificationDispatcher:
         webhook_error: str | None = None
 
         try:
-            if provider == "evolution":
-                webhook_status_code = self._send_via_evolution(phone, message_text)
-            elif provider == "zapi":
-                webhook_status_code = self._send_via_zapi(phone, message_text)
-            elif provider == "greenapi":
-                webhook_status_code = self._send_via_greenapi(phone, message_text)
-            elif provider == "meta":
-                webhook_status_code = self._send_via_meta(phone, message_text)
-            elif provider == "callmebot":
-                webhook_status_code = self._send_via_callmebot(phone, message_text)
-            elif provider == "webhook":
+            if provider == "webhook":
                 webhook_status_code = self._send_via_webhook(json_bytes)
             else:
-                raise ValueError(f"Provedor WhatsApp desconhecido: '{provider}'")
+                # 1. Dispara a mensagem principal (Resumo de Margem + Estoque Baixo + Resumo de Fiado)
+                webhook_status_code = self._send_single_text(
+                    provider, phone, message_text
+                )
+                # 2. Dispara 1 mensagem separada para cada cliente de fiado (pronta para encaminhar)
+                for f_msg in individual_fiado_messages:
+                    self._send_single_text(provider, phone, f_msg)
 
             webhook_sent = (
                 webhook_status_code is not None and 200 <= webhook_status_code < 300

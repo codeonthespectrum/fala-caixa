@@ -223,34 +223,54 @@ class NexWebReadOnlyCollector(BaseNexCollector):
                     self.store_name = str(sn)
 
     def fetch_raw_products(self) -> list[dict[str, Any]]:
-        """Retorna a lista bruta de produtos da loja no Nex Web."""
+        """Retorna a lista completa de produtos ativos da loja no Nex Web (com paginação automática)."""
         self.authenticate_if_needed()
         if not self.shop_code:
-            return [{"error": "no_shop_code"}] if False else self._fetch_legacy_products()
-        payload = self._safe_request(
-            "GET",
-            f"/product/{self.shop_code}",
-            params={
-                "page": 0,
-                "size": 200,
-                "sort": "description",
-                "direction": "asc",
-                "filter": "active",
-            },
-        )
-        if isinstance(payload, dict):
-            content = payload.get("content")
-            if isinstance(content, list):
-                return content
-            data_inner = payload.get("data")
-            if isinstance(data_inner, dict) and isinstance(
-                data_inner.get("content"), list
-            ):
-                return data_inner["content"]
-            items = payload.get("items")
-            if isinstance(items, list):
-                return items
-        return payload if isinstance(payload, list) else []
+            return self._fetch_legacy_products()
+
+        all_items: list[dict[str, Any]] = []
+        page = 0
+        max_pages = 15
+        while page < max_pages:
+            payload = self._safe_request(
+                "GET",
+                f"/product/{self.shop_code}",
+                params={
+                    "page": page,
+                    "size": 200,
+                    "sort": "description",
+                    "direction": "asc",
+                    "filter": "active",
+                },
+            )
+            batch: list[dict[str, Any]] = []
+            total_pages = 1
+            if isinstance(payload, dict):
+                total_pages = int(payload.get("totalPages") or 1)
+                content = payload.get("content")
+                if isinstance(content, list):
+                    batch = content
+                else:
+                    data_inner = payload.get("data")
+                    if isinstance(data_inner, dict) and isinstance(
+                        data_inner.get("content"), list
+                    ):
+                        batch = data_inner["content"]
+                    else:
+                        items = payload.get("items")
+                        if isinstance(items, list):
+                            batch = items
+            elif isinstance(payload, list):
+                batch = payload
+
+            if not batch:
+                break
+            all_items.extend(batch)
+            page += 1
+            if page >= total_pages:
+                break
+
+        return all_items
 
     def _fetch_legacy_products(self) -> list[dict[str, Any]]:
         payload = self._safe_request("GET", "/api/products")
@@ -357,6 +377,33 @@ class NexWebReadOnlyCollector(BaseNexCollector):
                 fallback=now,
             )
             if cost > Decimal("0") and entry_dt is not None:
+                is_active = bool(item.get("active", True)) and not bool(
+                    item.get("inactive", False)
+                )
+                has_stock_flag = bool(item.get("has_stock", True))
+                stock_ctrl_flag = bool(item.get("stock_control", True))
+                raw_cur_stock = item.get("current_stock")
+                if raw_cur_stock is None:
+                    raw_cur_stock = item.get("stock")
+                cur_stock_dec = (
+                    parse_brl_decimal(raw_cur_stock)
+                    if raw_cur_stock is not None and raw_cur_stock != ""
+                    else None
+                )
+                raw_min_stock = item.get("stockmin")
+                if raw_min_stock is None:
+                    raw_min_stock = item.get("min_stock")
+                min_stock_dec = (
+                    parse_brl_decimal(raw_min_stock)
+                    if raw_min_stock is not None and raw_min_stock != ""
+                    else None
+                )
+                # No Nex, produtos com estoque zerado/negativo ou sem controle de estoque ativo
+                # não estão fisicamente em giro na prateleira.
+                effective_has_stock = has_stock_flag and (
+                    cur_stock_dec is None or cur_stock_dec > Decimal("0")
+                )
+
                 entries.append(
                     StockEntry(
                         product_id=prod_id,
@@ -364,6 +411,11 @@ class NexWebReadOnlyCollector(BaseNexCollector):
                         entry_date=entry_dt,
                         cost_price=cost,
                         sale_price=sale,
+                        current_stock=cur_stock_dec,
+                        min_stock=min_stock_dec,
+                        active=is_active,
+                        has_stock=effective_has_stock,
+                        stock_control=stock_ctrl_flag,
                     )
                 )
         return entries

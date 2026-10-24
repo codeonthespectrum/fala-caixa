@@ -8,6 +8,7 @@ from nex_alerts.domain.models import (
     DailyDigestReport,
     FiadoAlertItem,
     FiadoTier,
+    LowStockAlertItem,
     MarginAlertItem,
 )
 
@@ -70,13 +71,59 @@ def format_fiado_item(item: FiadoAlertItem, fallback_pix_key: str) -> str:
     )
 
 
+def format_qty(value: Decimal) -> str:
+    """Formata quantidade de estoque sem casas decimais desnecessárias (ex: 3.0 -> '3')."""
+    if value == value.to_integral_value():
+        return str(int(value))
+    return f"{value.normalize():f}".replace(".", ",")
+
+
+def format_low_stock_item(item: LowStockAlertItem) -> str:
+    """Formata um item de alerta de estoque baixo (Funcionalidade C)."""
+    cur_str = format_qty(item.current_stock)
+    min_str = format_qty(item.min_stock)
+    unit_label = "unidade" if item.current_stock == Decimal("1") else "unidades"
+    return (
+        f"• {item.product_name}: Restam apenas {cur_str} {unit_label} "
+        f"(Mínimo ideal: {min_str})"
+    )
+
+
+def format_individual_fiado_message(
+    item: FiadoAlertItem, store_name: str, fallback_pix_key: str
+) -> str:
+    """Gera uma mensagem individual pronta para encaminhar ao cliente de fiado no WhatsApp."""
+    amount_str = format_brl(item.total_overdue_amount)
+    pix_to_show = item.pix_key or fallback_pix_key
+    clean_store = store_name.strip() or "nossa loja"
+
+    if item.tier == FiadoTier.NIVEL_3_BOM_PAGADOR:
+        return (
+            f"Olá, *{item.customer_name}*, tudo bem? 😊\n"
+            f"Passando aqui da *{clean_store}* só para atualizar o seu controle: "
+            f"consta um saldo em aberto de *{amount_str}* na sua conta.\n\n"
+            f"Se preferir acertar por PIX, nossa chave é:\n"
+            f"🔑 *Chave PIX:* {pix_to_show}\n\n"
+            f"Qualquer dúvida é só chamar. Muito obrigado pela parceria de sempre! 🙏"
+        )
+
+    return (
+        f"Olá, *{item.customer_name}*, tudo bem?\n"
+        f"Passando aqui da *{clean_store}* para lembrar que ficou um saldo em aberto "
+        f"de *{amount_str}* na sua conta.\n\n"
+        f"Quando puder, você pode acertar aqui na loja ou direto pelo nosso PIX:\n"
+        f"🔑 *Chave PIX:* {pix_to_show}\n\n"
+        f"Qualquer dúvida é só chamar. Obrigado! 🙏"
+    )
+
+
 def format_daily_digest(report: DailyDigestReport) -> str:
     """Gera o texto único consolidado pronto para disparo no WhatsApp (lista completa)."""
     lines: list[str] = ["📦 RESUMO INTELIGENTE DO CAIXA"]
 
     if not report.has_alerts:
         lines.append("")
-        lines.append("✅ Nenhum alerta crítico de margem ou fiado identificado hoje.")
+        lines.append("✅ Nenhum alerta crítico de margem, estoque ou fiado identificado hoje.")
         return "\n".join(lines)
 
     if report.margin_alerts:
@@ -85,10 +132,20 @@ def format_daily_digest(report: DailyDigestReport) -> str:
         for item in report.margin_alerts:
             lines.append(format_margin_item(item))
 
+    if report.low_stock_alerts:
+        lines.append("")
+        lines.append("📉 Alerta de Estoque Baixo (Reposição Necessária):")
+        for item in report.low_stock_alerts:
+            lines.append(format_low_stock_item(item))
+
     if report.fiado_alerts:
         lines.append("")
         lines.append("⚠️ Cobrança de Fiado (+30 dias):")
         for item in report.fiado_alerts:
             lines.append(format_fiado_item(item, fallback_pix_key=report.pix_key))
+        lines.append("")
+        lines.append(
+            "📲 *Abaixo estão as mensagens individuais prontas para você encaminhar para cada cliente:*"
+        )
 
     return "\n".join(lines)

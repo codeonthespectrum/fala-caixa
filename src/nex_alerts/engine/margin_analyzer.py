@@ -13,7 +13,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from decimal import Decimal, ROUND_CEILING, ROUND_FLOOR, ROUND_HALF_UP
 
-from nex_alerts.domain.models import MarginAlertItem, StockEntry
+from nex_alerts.domain.models import LowStockAlertItem, MarginAlertItem, StockEntry
 
 
 def round_up_to_step(value: Decimal, step: Decimal = Decimal("0.10")) -> Decimal:
@@ -74,6 +74,8 @@ def analyze_margin_entries(
 
     alerts: list[MarginAlertItem] = []
     for entry in latest_by_product.values():
+        if not entry.active or not entry.has_stock:
+            continue
         if entry.cost_price <= Decimal("0"):
             continue
 
@@ -105,3 +107,40 @@ def analyze_margin_entries(
     # Ordena da menor margem (mais crítica) para a maior
     alerts.sort(key=lambda item: (item.current_margin_ratio, item.product_name))
     return alerts
+
+
+def analyze_low_stock_entries(
+    entries: list[StockEntry],
+    default_min_stock: Decimal = Decimal("2"),
+) -> list[LowStockAlertItem]:
+    """Identifica produtos ativos e em linha cujo estoque atual está baixo (<= mínimo cadastrado ou <= 2 un.)."""
+    latest_by_product: dict[str, StockEntry] = {}
+    for entry in entries:
+        existing = latest_by_product.get(entry.product_id)
+        if existing is None or entry.entry_date >= existing.entry_date:
+            latest_by_product[entry.product_id] = entry
+
+    low_alerts: list[LowStockAlertItem] = []
+    for entry in latest_by_product.values():
+        if not entry.active or not entry.stock_control or not entry.has_stock:
+            continue
+        if entry.current_stock is None or entry.current_stock <= Decimal("0"):
+            continue
+
+        effective_min = (
+            entry.min_stock
+            if (entry.min_stock is not None and entry.min_stock > Decimal("0"))
+            else default_min_stock
+        )
+        if entry.current_stock <= effective_min:
+            low_alerts.append(
+                LowStockAlertItem(
+                    product_id=entry.product_id,
+                    product_name=entry.product_name,
+                    current_stock=entry.current_stock,
+                    min_stock=effective_min,
+                )
+            )
+
+    low_alerts.sort(key=lambda item: (item.current_stock, item.product_name))
+    return low_alerts
