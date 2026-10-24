@@ -70,7 +70,11 @@ def format_fiado_item(item: FiadoAlertItem, fallback_pix_key: str) -> str:
     )
 
 
-def format_daily_digest(report: DailyDigestReport) -> str:
+def format_daily_digest(
+    report: DailyDigestReport,
+    max_margin_items: int = 12,
+    max_fiado_items: int = 12,
+) -> str:
     """Gera o texto único consolidado pronto para disparo no WhatsApp."""
     lines: list[str] = ["📦 RESUMO INTELIGENTE DO CAIXA"]
 
@@ -82,13 +86,25 @@ def format_daily_digest(report: DailyDigestReport) -> str:
     if report.margin_alerts:
         lines.append("")
         lines.append("🚨 Reajuste de Margem Necessário (Entradas Recentes):")
-        for item in report.margin_alerts:
+        shown_margin = report.margin_alerts[:max_margin_items]
+        for item in shown_margin:
             lines.append(format_margin_item(item))
+        extra_margin = len(report.margin_alerts) - len(shown_margin)
+        if extra_margin > 0:
+            lines.append(
+                f"➕ ...e mais {extra_margin} produtos com margem abaixo de 30%."
+            )
 
     if report.fiado_alerts:
         lines.append("")
         lines.append("⚠️ Cobrança de Fiado (+30 dias):")
-        for item in report.fiado_alerts:
+        shown_fiado = report.fiado_alerts[:max_fiado_items]
+        for item in shown_fiado:
             lines.append(format_fiado_item(item, fallback_pix_key=report.pix_key))
+        extra_fiado = len(report.fiado_alerts) - len(shown_fiado)
+        if extra_fiado > 0:
+            lines.append(
+                f"➕ ...e mais {extra_fiado} clientes com fiado acima de 30 dias."
+            )
 
     return "\n".join(lines)

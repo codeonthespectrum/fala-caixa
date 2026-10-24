@@ -11,7 +11,7 @@ Regras:
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from decimal import Decimal, ROUND_CEILING, ROUND_HALF_UP
+from decimal import Decimal, ROUND_CEILING, ROUND_FLOOR, ROUND_HALF_UP
 
 from nex_alerts.domain.models import MarginAlertItem, StockEntry
 
@@ -81,7 +81,7 @@ def analyze_margin_entries(
         if margin_ratio < margin_threshold:
             margin_pct = int(
                 (margin_ratio * Decimal("100")).quantize(
-                    Decimal("1"), rounding=ROUND_HALF_UP
+                    Decimal("1"), rounding=ROUND_FLOOR
                 )
             )
             suggested_price = calculate_suggested_price(

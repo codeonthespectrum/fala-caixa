@@ -436,6 +436,8 @@ class NexWebReadOnlyCollector(BaseNexCollector):
 
             balance_updated_dt = parse_iso_or_flexible_datetime(
                 item.get("balance_status_updated_at")
+                or item.get("updated_at")
+                or item.get("created_at")
             )
             due_date = (
                 parse_flexible_date(item.get("oldest_due_date") or item.get("due_date"))
