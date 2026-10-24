@@ -158,6 +158,36 @@ class NotificationDispatcher:
         if not phone:
             raise ValueError("WHATSAPP_PHONE é obrigatório para envio via Green-API.")
         base = self.config.greenapi_api_url or "https://api.green-api.com"
+
+        # Verifica se a instância do Green-API está autorizada (conectada ao WhatsApp)
+        state_url = (
+            f"{base}/waInstance{self.config.greenapi_id_instance}"
+            f"/getStateInstance/{self.config.greenapi_api_token}"
+        )
+        try:
+            state_req = urllib.request.Request(
+                url=state_url,
+                headers={"User-Agent": "Mozilla/5.0 (MargemViva/0.1)"},
+                method="GET",
+            )
+            with self.opener(state_req, timeout=self.webhook_timeout_seconds) as s_resp:
+                raw_state = s_resp.read()
+                if isinstance(raw_state, bytes):
+                    raw_state = raw_state.decode("utf-8")
+                state_data = (
+                    json.loads(raw_state)
+                    if isinstance(raw_state, str) and raw_state.strip()
+                    else {}
+                )
+                state_val = state_data.get("stateInstance") if isinstance(state_data, dict) else None
+                if state_val and state_val != "authorized":
+                    raise RuntimeError(
+                        f"Instância Green-API desconectada no WhatsApp (stateInstance='{state_val}'). "
+                        "Escaneie o QR Code no painel console.green-api.com."
+                    )
+        except urllib.error.HTTPError:
+            pass
+
         chat_id = self._resolve_greenapi_chat_id(base, phone)
         url = (
             f"{base}/waInstance{self.config.greenapi_id_instance}"
