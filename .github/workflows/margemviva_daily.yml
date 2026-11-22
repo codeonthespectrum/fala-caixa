@@ -1,9 +1,9 @@
 name: "MargemViva — Alerta Diário Multi-Loja"
 
 on:
-  # Agendamento automático diário às 08:00 BRT (11:00 UTC) — Descomente quando quiser ativar em produção!
-  # schedule:
-  #   - cron: "0 11 * * *"
+  # Agendamento automático diário às 08:00 BRT (11:00 UTC) — ATIVO EM PRODUÇÃO!
+  schedule:
+    - cron: "0 11 * * *"
   # Permite disparar manualmente com 1 clique pelo celular ou PC na aba Actions
   workflow_dispatch:
     inputs:
