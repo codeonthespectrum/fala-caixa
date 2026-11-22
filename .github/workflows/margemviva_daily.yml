@@ -1,9 +1,9 @@
 name: "MargemViva — Alerta Diário Multi-Loja"
 
 on:
-  # Agendamento automático diário às 08:00 BRT (11:00 UTC) — ATIVO EM PRODUÇÃO!
-  schedule:
-    - cron: "0 11 * * *"
+  # Agendamento diário agora é executado 100% pelo Hermes Agent (cronjob 9bcc45fc3a06 às 08:00 BRT) sem depender de Green-API!
+  # schedule:
+  #   - cron: "0 11 * * *"
   # Permite disparar manualmente com 1 clique pelo celular ou PC na aba Actions
   workflow_dispatch:
     inputs:
