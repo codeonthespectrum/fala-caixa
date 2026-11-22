@@ -30,6 +30,7 @@ if str(_SRC_DIR) not in sys.path:
     sys.path.insert(0, str(_SRC_DIR))
 
 from nex_alerts.config import AppConfig, _load_env_file, load_multi_store_configs
+from nex_alerts.db.store_repository import StoreRepository
 from nex_alerts.domain.models import FiadoAlertItem, FiadoTier
 from nex_alerts.engine.fiado_analyzer import analyze_fiado_debts
 from nex_alerts.engine.margin_analyzer import (
@@ -249,8 +250,20 @@ def _detect_caller_phone_candidates() -> set[str]:
     return candidates
 
 
+class SubscriptionInactiveError(RuntimeError):
+    """Erro levantado quando o período trial ou assinatura da loja está inativo."""
+
+    def __init__(self, store_name: str, status: str) -> None:
+        self.store_name = store_name
+        self.status = status
+        super().__init__(
+            f"O acesso da loja '{store_name}' está '{status}'. "
+            "Para reativar por R$ 67,00/mês, entre em contato com o suporte do Fala, Caixa!."
+        )
+
+
 def _resolve_store_config(store_hint: str = "") -> AppConfig:
-    """Carrega as configurações do MargemViva e seleciona a loja correspondente ao remetente ou ao nome informado."""
+    """Carrega as configurações do Fala, Caixa! priorizando o banco SQLite Multi-Loja."""
     from dataclasses import replace
 
     env_path = _REPO_ROOT / ".env"
@@ -260,6 +273,37 @@ def _resolve_store_config(store_hint: str = "") -> AppConfig:
     base_cfg = AppConfig.from_env(env_file=env_path if env_path.exists() else None)
     if (base_cfg.nex_web_email or base_cfg.nex_web_token) and base_cfg.data_source_mode == "mock":
         base_cfg = replace(base_cfg, data_source_mode="nex_web")
+
+    db_path = _REPO_ROOT / "data" / "falacaixa.db"
+    repo = StoreRepository(db_path)
+    repo.bootstrap_from_env_if_empty(env_path)
+    db_stores = repo.list_stores()
+
+    if db_stores:
+        # 1. Se foi informado nome de loja explicitamente
+        if store_hint and store_hint.strip():
+            hint_norm = _strip_accents(store_hint)
+            for st in db_stores:
+                if hint_norm in _strip_accents(st.store_name):
+                    eff = st.effective_status()
+                    if eff not in {"active", "trial"}:
+                        raise SubscriptionInactiveError(st.store_name, eff)
+                    return repo.to_app_config(st, base_config=base_cfg)
+
+        # 2. Roteamento automático pelo telefone de quem está falando no WhatsApp
+        caller_phones = _detect_caller_phone_candidates()
+        if caller_phones:
+            matched_store, access_status = repo.resolve_store_for_phone(caller_phones)
+            if matched_store is not None:
+                if access_status != "ok":
+                    raise SubscriptionInactiveError(matched_store.store_name, access_status)
+                return repo.to_app_config(matched_store, base_config=base_cfg)
+
+        # 3. Fallback para a primeira loja ativa/trial (ex: CLI local sem telefone)
+        eligible = repo.list_eligible_stores_for_daily()
+        if eligible:
+            return repo.to_app_config(eligible[0], base_config=base_cfg)
+
     stores_file = _REPO_ROOT / "stores.json"
     stores = load_multi_store_configs(
         base_config=base_cfg,
@@ -268,14 +312,12 @@ def _resolve_store_config(store_hint: str = "") -> AppConfig:
     if not stores:
         return base_cfg
 
-    # 1. Se o usuário/admin informou explicitamente o nome da loja
     if store_hint and store_hint.strip():
         hint_norm = _strip_accents(store_hint)
         for st in stores:
             if hint_norm in _strip_accents(st.store_name):
                 return st
 
-    # 2. Roteamento automático pelo telefone de quem está falando no WhatsApp
     caller_phones = _detect_caller_phone_candidates()
     if caller_phones:
         for st in stores:
@@ -283,7 +325,6 @@ def _resolve_store_config(store_hint: str = "") -> AppConfig:
             if caller_phones & st_variants:
                 return st
 
-    # 3. Fallback: primeira loja ativa (ex: Conveniencia Central)
     return stores[0]
 
 
