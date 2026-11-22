@@ -59,7 +59,10 @@ class AppConfig:
 
     # Saída e Notificação WhatsApp (Multi-Provedor Nativo)
     output_dir: Path = Path("./output/alertas_enviados")
-    whatsapp_provider: str = "auto"  # "auto", "evolution", "zapi", "meta", "callmebot", "webhook", "none"
+    whatsapp_provider: str = "auto"  # "auto", "hermes", "greenapi", "evolution", "zapi", "meta", "callmebot", "webhook", "none"
+
+    # 0. Hermes Agent Local WhatsApp Bridge
+    hermes_bridge_url: str = "http://127.0.0.1:3000"
 
     # 1. Evolution API
     evolution_api_url: str = ""
@@ -123,6 +126,9 @@ class AppConfig:
             nex_web_password=os.getenv("NEX_WEB_PASSWORD", "").strip(),
             output_dir=Path(os.getenv("OUTPUT_DIR", "./output/alertas_enviados")),
             whatsapp_provider=os.getenv("WHATSAPP_PROVIDER", "auto").strip().lower(),
+            hermes_bridge_url=os.getenv(
+                "HERMES_BRIDGE_URL", "http://127.0.0.1:3000"
+            ).strip().rstrip("/"),
             evolution_api_url=os.getenv("EVOLUTION_API_URL", "").strip().rstrip("/"),
             evolution_api_instance=os.getenv("EVOLUTION_API_INSTANCE", "").strip(),
             evolution_api_key=os.getenv("EVOLUTION_API_KEY", "").strip(),
@@ -200,6 +206,9 @@ def load_multi_store_configs(
         whatsapp_provider = str(
             item.get("whatsapp_provider") or base_config.whatsapp_provider
         ).strip().lower()
+        hermes_bridge_url = str(
+            item.get("hermes_bridge_url") or base_config.hermes_bridge_url
+        ).strip().rstrip("/")
         margin_threshold = Decimal(
             str(item.get("margin_threshold", base_config.margin_threshold))
         )
@@ -219,6 +228,7 @@ def load_multi_store_configs(
             greenapi_api_token=greenapi_token,
             callmebot_api_key=callmebot_key,
             whatsapp_provider=whatsapp_provider,
+            hermes_bridge_url=hermes_bridge_url,
             margin_threshold=margin_threshold,
         )
         configs.append(store_cfg)

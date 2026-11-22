@@ -1,0 +1,17 @@
+name: margem-viva
+label: MargemViva — Inteligência Diária e Consultor Nex (Nextar)
+kind: standalone
+version: 1.0.0
+author: MargemViva
+description: >
+  Camada de inteligência operacional 100% Read-Only para lojistas que usam o sistema Nex (Nextar).
+  Integra ferramentas conversacionais no WhatsApp (consulta de fiado + geração de texto PIX, consulta
+  de estoque e preço, simulador de margem de 30% e disparo sob demanda do Resumo Inteligente do Caixa)
+  com roteamento multi-loja automático pelo número de WhatsApp do lojista.
+requires_hermes: ">=0.21.0"
+provides_tools:
+  - margemviva_consultar_fiado
+  - margemviva_consultar_produto
+  - margemviva_simular_preco
+  - margemviva_enviar_resumo_agora
+provides_hooks: []

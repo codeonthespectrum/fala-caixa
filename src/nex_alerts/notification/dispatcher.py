@@ -116,6 +116,50 @@ class NotificationDispatcher:
             return "webhook"
         return "none"
 
+    def _resolve_hermes_jid(self, phone: str) -> str:
+        """Resolve o JID (@s.whatsapp.net ou @lid) usando a sessão local do Hermes Agent (~/.hermes/whatsapp/session)."""
+        if "@" in phone:
+            return phone
+        candidates = [phone]
+        if phone.startswith("55") and len(phone) == 13 and phone[4] == "9":
+            # Para DDDs >= 30 no Brasil, o WhatsApp Baileys geralmente armazena 12 dígitos (sem o 9º dígito)
+            if int(phone[2:4]) >= 30:
+                candidates = [phone[:4] + phone[5:], phone]
+            else:
+                candidates = [phone, phone[:4] + phone[5:]]
+        elif phone.startswith("55") and len(phone) == 12:
+            candidates = [phone, phone[:4] + "9" + phone[4:]]
+
+        session_dir = Path.home() / ".hermes" / "whatsapp" / "session"
+        if session_dir.is_dir():
+            for cand in candidates:
+                if (session_dir / f"lid-mapping-{cand}.json").exists():
+                    return f"{cand}@s.whatsapp.net"
+
+        return f"{candidates[0]}@s.whatsapp.net"
+
+    def _send_via_hermes(self, phone: str, message_text: str) -> int:
+        """Envia mensagem diretamente pelo bridge local do Hermes Agent (POST /send na porta 3000)."""
+        assert self.config is not None
+        if not phone:
+            raise ValueError("WHATSAPP_PHONE é obrigatório para envio via Hermes Agent.")
+        base = (self.config.hermes_bridge_url or "http://127.0.0.1:3000").rstrip("/")
+        chat_id = self._resolve_hermes_jid(phone)
+        url = f"{base}/send"
+        body = json.dumps({"chatId": chat_id, "message": message_text}).encode("utf-8")
+        req = urllib.request.Request(
+            url=url,
+            data=body,
+            headers={
+                "Content-Type": "application/json; charset=utf-8",
+                "Host": "127.0.0.1:3000",
+                "User-Agent": "Mozilla/5.0 (MargemViva/0.2-Hermes)",
+            },
+            method="POST",
+        )
+        with self.opener(req, timeout=max(30, self.webhook_timeout_seconds)) as resp:
+            return int(resp.status)
+
     def _resolve_greenapi_chat_id(self, base: str, phone: str) -> str:
         """Resolve o chatId exato do WhatsApp no Brasil (com ou sem o 9º dígito após o DDD)."""
         assert self.config is not None
@@ -311,6 +355,8 @@ class NotificationDispatcher:
 
     def _send_single_text(self, provider: str, phone: str, text: str) -> int:
         """Envia uma única mensagem de texto pelo provedor selecionado."""
+        if provider == "hermes":
+            return self._send_via_hermes(phone, text)
         if provider == "evolution":
             return self._send_via_evolution(phone, text)
         if provider == "zapi":
