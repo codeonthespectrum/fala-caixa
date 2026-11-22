@@ -31,6 +31,7 @@ if str(_SRC_DIR) not in sys.path:
 
 from nex_alerts.config import AppConfig, _load_env_file, load_multi_store_configs
 from nex_alerts.db.store_repository import StoreRepository
+from nex_alerts.db.store_resolver import StoreResolver
 from nex_alerts.domain.models import FiadoAlertItem, FiadoTier
 from nex_alerts.engine.fiado_analyzer import analyze_fiado_debts
 from nex_alerts.engine.margin_analyzer import (
@@ -251,7 +252,7 @@ def _detect_caller_phone_candidates() -> set[str]:
 
 
 class SubscriptionInactiveError(RuntimeError):
-    """Erro levantado quando o período trial ou assinatura da loja está inativo."""
+    """Alias legado: a decisão de assinatura mora no Resolver de Loja."""
 
     def __init__(self, store_name: str, status: str) -> None:
         self.store_name = store_name
@@ -280,29 +281,15 @@ def _resolve_store_config(store_hint: str = "") -> AppConfig:
     db_stores = repo.list_stores()
 
     if db_stores:
-        # 1. Se foi informado nome de loja explicitamente
-        if store_hint and store_hint.strip():
-            hint_norm = _strip_accents(store_hint)
-            for st in db_stores:
-                if hint_norm in _strip_accents(st.store_name):
-                    eff = st.effective_status()
-                    if eff not in {"active", "trial"}:
-                        raise SubscriptionInactiveError(st.store_name, eff)
-                    return repo.to_app_config(st, base_config=base_cfg)
-
-        # 2. Roteamento automático pelo telefone de quem está falando no WhatsApp
+        # Resolver de Loja: decisão única de identidade, autorização e assinatura.
+        # Nunca adivinha loja por fallback; o hint `loja` só vale para membros
+        # daquela loja ou para Admins de Suporte declarados em FALACAIXA_ADMIN_PHONES.
+        admin_csv = os.getenv("FALACAIXA_ADMIN_PHONES", "")
+        admin_phones = [p.strip() for p in admin_csv.split(",") if p.strip()]
+        resolver = StoreResolver(repo, admin_phones=admin_phones)
         caller_phones = _detect_caller_phone_candidates()
-        if caller_phones:
-            matched_store, access_status = repo.resolve_store_for_phone(caller_phones)
-            if matched_store is not None:
-                if access_status != "ok":
-                    raise SubscriptionInactiveError(matched_store.store_name, access_status)
-                return repo.to_app_config(matched_store, base_config=base_cfg)
-
-        # 3. Fallback para a primeira loja ativa/trial (ex: CLI local sem telefone)
-        eligible = repo.list_eligible_stores_for_daily()
-        if eligible:
-            return repo.to_app_config(eligible[0], base_config=base_cfg)
+        store = resolver.autorizar(caller_phones, hint_loja=store_hint)
+        return repo.to_app_config(store, base_config=base_cfg)
 
     stores_file = _REPO_ROOT / "stores.json"
     stores = load_multi_store_configs(
