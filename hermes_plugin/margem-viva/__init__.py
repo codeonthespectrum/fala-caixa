@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from decimal import Decimal, ROUND_FLOOR
+import difflib
 import json
 import os
 from pathlib import Path
@@ -60,36 +61,116 @@ def _strip_accents(text: str) -> str:
 
 
 _UNIT_EXPAND_MAP = {
-    "1l": {"1l", "1lt", "1 litro", "1 litros"},
-    "1lt": {"1l", "1lt", "1 litro", "1 litros"},
-    "2l": {"2l", "2lt", "2 litros", "2 litro"},
-    "2lt": {"2l", "2lt", "2 litros", "2 litro"},
-    "350ml": {"350ml", "lata"},
-    "cx": {"cx", "caixa", "fardo"},
-    "und": {"und", "un", "unidade"},
+    "1l": {"1l", "1lt", "1 litro", "1 litros", "1000ml"},
+    "1lt": {"1l", "1lt", "1 litro", "1 litros", "1000ml"},
+    "2l": {"2l", "2lt", "2 litros", "2 litro", "2000ml"},
+    "2lt": {"2l", "2lt", "2 litros", "2 litro", "2000ml"},
+    "litro": {"litro", "litros", "1l", "1lt", "2l", "2lt", "lt"},
+    "litros": {"litro", "litros", "1l", "1lt", "2l", "2lt", "lt"},
+    "350ml": {"350ml", "lata", "350"},
+    "lata": {"lata", "latinha", "350ml", "269ml", "473ml", "latão", "latao"},
+    "latinha": {"lata", "latinha", "350ml", "269ml"},
+    "latao": {"latao", "latão", "473ml", "550ml"},
+    "ln": {"ln", "long neck", "longneck", "330ml"},
+    "long": {"ln", "long", "330ml"},
+    "neck": {"ln", "neck", "330ml"},
+    "cx": {"cx", "caixa", "fardo", "pack", "c/12", "12x"},
+    "caixa": {"cx", "caixa", "fardo"},
+    "fardo": {"cx", "caixa", "fardo", "c/12", "12x"},
+    "und": {"und", "un", "unidade", "avulsa", "avulso"},
+    "unidade": {"und", "un", "unidade"},
+    "cerveja": {"cerv", "cerveja"},
+    "cerv": {"cerv", "cerveja"},
+    "biscoito": {"bisc", "biscoito", "bolacha"},
+    "bolacha": {"bisc", "biscoito", "bolacha"},
+    "bisc": {"bisc", "biscoito", "bolacha"},
+    "chocolate": {"choc", "choco", "chocolate"},
+    "choc": {"choc", "choco", "chocolate"},
+    "refrigerante": {"refri", "refrigerante", "coca", "fanta", "sprite", "guarana", "pepsi"},
+    "refri": {"refri", "refrigerante", "coca", "fanta", "sprite", "guarana", "pepsi"},
+    "absorvente": {"abs", "absorvente"},
+    "abs": {"abs", "absorvente"},
+    "cigarro": {"cigarro", "carteira", "maco"},
+    "carteira": {"cigarro", "carteira"},
+    "desodorante": {"desod", "desodorante"},
+    "desod": {"desod", "desodorante"},
+    "energetico": {"energetico", "energ", "monster", "infinity", "baly", "red bull"},
+    "achocolatado": {"achoc", "achocolatado", "nescau", "toddynho"},
+    "achoc": {"achoc", "achocolatado"},
+    "aparelho": {"apar", "aparelho", "barbear", "prestobarba", "gillette"},
+    "barbeador": {"apar", "aparelho", "barbear", "barbeador"},
+}
+
+_STOP_WORDS = {
+    "de", "da", "do", "das", "dos", "com", "sem", "em", "no", "na", "nos", "nas",
+    "para", "pra", "pro", "por", "um", "uma", "o", "a", "os", "as", "tem", "qual",
+    "quanto", "quantas", "quantos", "estoque", "preco", "valor", "custa", "ta", "esta",
 }
 
 
-def _matches_smart_query(query: str, target_name: str) -> bool:
-    """Busca inteligente tolerante a variações (ex: 'Coca Cola 2L' casa com 'COCA COLA 2 LITROS')."""
+def _extract_query_tokens(query: str) -> list[str]:
     q_norm = _strip_accents(query)
-    if not q_norm:
-        return True
-    t_norm = _strip_accents(target_name)
-    if q_norm in t_norm:
-        return True
-    tokens = [
+    # Normaliza padrões juntos como "2 l" -> "2l", "350 ml" -> "350ml"
+    q_norm = re.sub(r"(\d+)\s*(l|lt|ml|g|kg)\b", r"\1\2", q_norm)
+    return [
         tok
         for tok in re.split(r"[^a-z0-9]+", q_norm)
-        if tok and tok not in {"de", "da", "do", "com", "em", "para", "por"}
+        if tok and tok not in _STOP_WORDS
     ]
-    if not tokens:
-        return True
-    for tok in tokens:
+
+
+def _score_smart_query(query: str, target_name: str) -> float:
+    """Pontua o grau de correspondência PLN entre o termo falado pelo lojista e o cadastro no ERP/Nex.
+    - >= 1.0: match exato ou todos os tokens (com sinônimos/abreviações) bateram
+    - 0.35 .. 0.99: match parcial (algumas palavras-chave ou similaridade fonética/fuzzy)
+    - 0.0: sem relação
+    """
+    q_norm = _strip_accents(query)
+    if not q_norm:
+        return 1.0
+    t_norm = _strip_accents(target_name)
+    if q_norm == t_norm:
+        return 2.0
+    if q_norm in t_norm:
+        return 1.5
+
+    q_tokens = _extract_query_tokens(query)
+    if not q_tokens:
+        return 1.0
+
+    t_tokens = [tok for tok in re.split(r"[^a-z0-9]+", t_norm) if tok]
+    matched_tokens = 0.0
+
+    for tok in q_tokens:
         variants = _UNIT_EXPAND_MAP.get(tok, {tok})
-        if not any(v in t_norm for v in variants):
-            return False
-    return True
+        # 1. Substring ou sinônimo direto no nome do produto
+        if any(v in t_norm for v in variants):
+            matched_tokens += 1.0
+            continue
+        # 2. Prefix match (ex: "cervej" casa com "cerv", "choc" casa com "chocolate")
+        if any(
+            (len(tok) >= 3 and len(tt) >= 3 and (tok.startswith(tt[:4]) or tt.startswith(tok[:4])))
+            for tt in t_tokens
+        ):
+            matched_tokens += 0.85
+            continue
+        # 3. Fuzzy / erro de digitação (ex: "coca colla", "budwiser", "daniloco")
+        best_fuzzy = max(
+            (difflib.SequenceMatcher(None, tok, tt).ratio() for tt in t_tokens),
+            default=0.0,
+        )
+        if best_fuzzy >= 0.74:
+            matched_tokens += best_fuzzy
+
+    ratio = matched_tokens / len(q_tokens)
+    if ratio >= 0.99:
+        return 1.0 + (0.1 * len(q_tokens))
+    return ratio
+
+
+def _matches_smart_query(query: str, target_name: str) -> bool:
+    """Compatibilidade booleana rápida (>= 60% dos tokens ou match direto)."""
+    return _score_smart_query(query, target_name) >= 0.60
 
 
 def _get_cached_stock_entries(cfg: AppConfig) -> list[Any]:
@@ -238,14 +319,25 @@ def tool_consultar_fiado(
             key=lambda r: (-r.total_overdue_amount, r.customer_name),
         )
 
+        scored_records: list[tuple[float, Any]] = []
         for rec in debts_sorted:
             if rec.total_overdue_amount <= Decimal("0"):
                 continue
             days_overdue = max(0, (today - rec.oldest_due_date).days)
             if not incluir_menores_30_dias and days_overdue <= cfg.overdue_min_days:
                 continue
-            if cliente and not _matches_smart_query(cliente, rec.customer_name):
+            score = _score_smart_query(cliente, rec.customer_name) if cliente else 1.0
+            if cliente and score < 0.45:
                 continue
+            scored_records.append((score, rec))
+
+        if cliente:
+            scored_records.sort(
+                key=lambda x: (-x[0], -x[1].total_overdue_amount, x[1].customer_name)
+            )
+
+        for _score, rec in scored_records:
+            days_overdue = max(0, (today - rec.oldest_due_date).days)
 
             total_geral += rec.total_overdue_amount
             alert_item = tier_by_id.get(rec.customer_id)
@@ -321,11 +413,12 @@ def tool_consultar_produto(
         cfg = _resolve_store_config(loja)
         entries = _get_cached_stock_entries(cfg)
 
-        matched = []
+        scored_matched: list[tuple[float, dict[str, Any]]] = []
         for entry in entries:
             if not entry.active:
                 continue
-            if produto and not _matches_smart_query(produto, entry.product_name):
+            score = _score_smart_query(produto, entry.product_name) if produto else 1.0
+            if produto and score < 0.40:
                 continue
 
             margin_ratio = calculate_margin_ratio(entry.cost_price, entry.sale_price)
@@ -358,21 +451,35 @@ def tool_consultar_produto(
             if apenas_margem_baixa and not is_low_margin:
                 continue
 
-            matched.append(
-                {
-                    "codigo": entry.product_id,
-                    "produto": entry.product_name,
-                    "estoque_atual": format_qty(cur_stock),
-                    "estoque_minimo": format_qty(eff_min),
-                    "em_estoque_na_gondola": bool(entry.has_stock and cur_stock > Decimal("0")),
-                    "alerta_estoque_baixo": is_low_stock,
-                    "preco_custo": format_brl(entry.cost_price),
-                    "preco_venda_atual": format_brl(entry.sale_price),
-                    "margem_atual_pct": f"{margin_pct}%",
-                    "alerta_margem_abaixo_30pct": is_low_margin,
-                    "preco_sugerido_para_30pct": format_brl(suggested),
-                }
+            scored_matched.append(
+                (
+                    score,
+                    {
+                        "codigo": entry.product_id,
+                        "produto": entry.product_name,
+                        "estoque_atual": format_qty(cur_stock),
+                        "estoque_minimo": format_qty(eff_min),
+                        "em_estoque_na_gondola": bool(entry.has_stock and cur_stock > Decimal("0")),
+                        "alerta_estoque_baixo": is_low_stock,
+                        "preco_custo": format_brl(entry.cost_price),
+                        "preco_venda_atual": format_brl(entry.sale_price),
+                        "margem_atual_pct": f"{margin_pct}%",
+                        "alerta_margem_abaixo_30pct": is_low_margin,
+                        "preco_sugerido_para_30pct": format_brl(suggested),
+                    },
+                )
             )
+
+        if produto:
+            # Se houver matches fortes (>= 0.95), prioriza eles; senão retorna os parciais mais próximos
+            strong = [x for x in scored_matched if x[0] >= 0.95]
+            if strong:
+                scored_matched = strong
+            scored_matched.sort(
+                key=lambda x: (-x[0], not x[1]["em_estoque_na_gondola"], x[1]["produto"])
+            )
+
+        matched = [x[1] for x in scored_matched]
 
         total_found = len(matched)
         cap = max(1, min(int(limite or 25), 100))

@@ -61,8 +61,8 @@ class AppConfig:
     output_dir: Path = Path("./output/alertas_enviados")
     whatsapp_provider: str = "auto"  # "auto", "hermes", "greenapi", "evolution", "zapi", "meta", "callmebot", "webhook", "none"
 
-    # 0. Hermes Agent Local WhatsApp Bridge
-    hermes_bridge_url: str = "http://127.0.0.1:3000"
+    # 0. Hermes Agent Local WhatsApp Bridge (Perfil isolado falacaixa na porta 3001)
+    hermes_bridge_url: str = "http://127.0.0.1:3001"
 
     # 1. Evolution API
     evolution_api_url: str = ""
@@ -127,7 +127,7 @@ class AppConfig:
             output_dir=Path(os.getenv("OUTPUT_DIR", "./output/alertas_enviados")),
             whatsapp_provider=os.getenv("WHATSAPP_PROVIDER", "auto").strip().lower(),
             hermes_bridge_url=os.getenv(
-                "HERMES_BRIDGE_URL", "http://127.0.0.1:3000"
+                "HERMES_BRIDGE_URL", "http://127.0.0.1:3001"
             ).strip().rstrip("/"),
             evolution_api_url=os.getenv("EVOLUTION_API_URL", "").strip().rstrip("/"),
             evolution_api_instance=os.getenv("EVOLUTION_API_INSTANCE", "").strip(),

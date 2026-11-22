@@ -130,30 +130,36 @@ class NotificationDispatcher:
         elif phone.startswith("55") and len(phone) == 12:
             candidates = [phone, phone[:4] + "9" + phone[4:]]
 
-        session_dir = Path.home() / ".hermes" / "whatsapp" / "session"
-        if session_dir.is_dir():
-            for cand in candidates:
-                if (session_dir / f"lid-mapping-{cand}.json").exists():
-                    return f"{cand}@s.whatsapp.net"
+        session_dirs = [
+            Path.home() / ".hermes" / "profiles" / "falacaixa" / "whatsapp" / "session",
+            Path.home() / ".hermes" / "profiles" / "falacaixa" / "platforms" / "whatsapp" / "session",
+            Path.home() / ".hermes" / "whatsapp" / "session",
+        ]
+        for session_dir in session_dirs:
+            if session_dir.is_dir():
+                for cand in candidates:
+                    if (session_dir / f"lid-mapping-{cand}.json").exists():
+                        return f"{cand}@s.whatsapp.net"
 
         return f"{candidates[0]}@s.whatsapp.net"
 
     def _send_via_hermes(self, phone: str, message_text: str) -> int:
-        """Envia mensagem diretamente pelo bridge local do Hermes Agent (POST /send na porta 3000)."""
+        """Envia mensagem diretamente pelo bridge local do Hermes Agent (POST /send na porta do perfil falacaixa)."""
         assert self.config is not None
         if not phone:
             raise ValueError("WHATSAPP_PHONE é obrigatório para envio via Hermes Agent.")
-        base = (self.config.hermes_bridge_url or "http://127.0.0.1:3000").rstrip("/")
+        base = (self.config.hermes_bridge_url or "http://127.0.0.1:3001").rstrip("/")
         chat_id = self._resolve_hermes_jid(phone)
         url = f"{base}/send"
+        parsed_host = urllib.parse.urlparse(base).netloc or "127.0.0.1:3001"
         body = json.dumps({"chatId": chat_id, "message": message_text}).encode("utf-8")
         req = urllib.request.Request(
             url=url,
             data=body,
             headers={
                 "Content-Type": "application/json; charset=utf-8",
-                "Host": "127.0.0.1:3000",
-                "User-Agent": "Mozilla/5.0 (MargemViva/0.2-Hermes)",
+                "Host": parsed_host,
+                "User-Agent": "Mozilla/5.0 (FalaCaixa/1.0-Hermes)",
             },
             method="POST",
         )
