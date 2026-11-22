@@ -17,6 +17,8 @@ import os
 from pathlib import Path
 import re
 import sys
+import threading
+import time
 import unicodedata
 from typing import Any
 
@@ -46,10 +48,76 @@ from nex_alerts.notification.formatter import (
 
 _SKILL_MD = Path(__file__).resolve().parent / "skills" / "consultor" / "SKILL.md"
 
+_CACHE_LOCK = threading.Lock()
+_CACHE_TTL_SECONDS = 300.0  # 5 minutos de cache em memória para respostas instantâneas
+_PRODUCTS_CACHE: dict[str, tuple[float, list[Any]]] = {}
+_DEBTS_CACHE: dict[str, tuple[float, list[Any]]] = {}
+
 
 def _strip_accents(text: str) -> str:
     nfkd = unicodedata.normalize("NFKD", str(text or "").strip().lower())
     return "".join(c for c in nfkd if not unicodedata.combining(c))
+
+
+_UNIT_EXPAND_MAP = {
+    "1l": {"1l", "1lt", "1 litro", "1 litros"},
+    "1lt": {"1l", "1lt", "1 litro", "1 litros"},
+    "2l": {"2l", "2lt", "2 litros", "2 litro"},
+    "2lt": {"2l", "2lt", "2 litros", "2 litro"},
+    "350ml": {"350ml", "lata"},
+    "cx": {"cx", "caixa", "fardo"},
+    "und": {"und", "un", "unidade"},
+}
+
+
+def _matches_smart_query(query: str, target_name: str) -> bool:
+    """Busca inteligente tolerante a variações (ex: 'Coca Cola 2L' casa com 'COCA COLA 2 LITROS')."""
+    q_norm = _strip_accents(query)
+    if not q_norm:
+        return True
+    t_norm = _strip_accents(target_name)
+    if q_norm in t_norm:
+        return True
+    tokens = [
+        tok
+        for tok in re.split(r"[^a-z0-9]+", q_norm)
+        if tok and tok not in {"de", "da", "do", "com", "em", "para", "por"}
+    ]
+    if not tokens:
+        return True
+    for tok in tokens:
+        variants = _UNIT_EXPAND_MAP.get(tok, {tok})
+        if not any(v in t_norm for v in variants):
+            return False
+    return True
+
+
+def _get_cached_stock_entries(cfg: AppConfig) -> list[Any]:
+    key = f"{cfg.store_name}:{cfg.nex_web_email}:{cfg.data_source_mode}"
+    now_ts = time.monotonic()
+    with _CACHE_LOCK:
+        cached = _PRODUCTS_CACHE.get(key)
+        if cached and (now_ts - cached[0]) < _CACHE_TTL_SECONDS:
+            return cached[1]
+    collector = build_collector(cfg)
+    entries = collector.fetch_recent_stock_entries(reference_now=datetime.now())
+    with _CACHE_LOCK:
+        _PRODUCTS_CACHE[key] = (now_ts, entries)
+    return entries
+
+
+def _get_cached_customer_debts(cfg: AppConfig, today: date) -> list[Any]:
+    key = f"{cfg.store_name}:{cfg.nex_web_email}:{cfg.data_source_mode}:{today.isoformat()}"
+    now_ts = time.monotonic()
+    with _CACHE_LOCK:
+        cached = _DEBTS_CACHE.get(key)
+        if cached and (now_ts - cached[0]) < _CACHE_TTL_SECONDS:
+            return cached[1]
+    collector = build_collector(cfg)
+    debts = collector.fetch_customer_debts(reference_today=today)
+    with _CACHE_LOCK:
+        _DEBTS_CACHE[key] = (now_ts, debts)
+    return debts
 
 
 def _phone_variants(phone: str) -> set[str]:
@@ -146,9 +214,8 @@ def tool_consultar_fiado(
     """Consulta clientes com fiado/débito em aberto no Nex (Read-Only) e gera texto pronto de cobrança com PIX."""
     try:
         cfg = _resolve_store_config(loja)
-        collector = build_collector(cfg)
         today = date.today()
-        debts = collector.fetch_customer_debts(reference_today=today)
+        debts = _get_cached_customer_debts(cfg, today)
 
         # Classifica também na régua oficial (+30 dias) para exibir o tier quando aplicável
         overdue_alerts = analyze_fiado_debts(
@@ -162,7 +229,6 @@ def tool_consultar_fiado(
         )
         tier_by_id = {a.customer_id: a for a in overdue_alerts}
 
-        query_norm = _strip_accents(cliente)
         results = []
         total_geral = Decimal("0.00")
 
@@ -178,7 +244,7 @@ def tool_consultar_fiado(
             days_overdue = max(0, (today - rec.oldest_due_date).days)
             if not incluir_menores_30_dias and days_overdue <= cfg.overdue_min_days:
                 continue
-            if query_norm and query_norm not in _strip_accents(rec.customer_name):
+            if cliente and not _matches_smart_query(cliente, rec.customer_name):
                 continue
 
             total_geral += rec.total_overdue_amount
@@ -253,16 +319,13 @@ def tool_consultar_produto(
     """Consulta estoque atual, estoque mínimo, preço de custo, preço de venda, margem e preço sugerido no Nex (Read-Only)."""
     try:
         cfg = _resolve_store_config(loja)
-        collector = build_collector(cfg)
-        now = datetime.now()
-        entries = collector.fetch_recent_stock_entries(reference_now=now)
+        entries = _get_cached_stock_entries(cfg)
 
-        query_norm = _strip_accents(produto)
         matched = []
         for entry in entries:
             if not entry.active:
                 continue
-            if query_norm and query_norm not in _strip_accents(entry.product_name):
+            if produto and not _matches_smart_query(produto, entry.product_name):
                 continue
 
             margin_ratio = calculate_margin_ratio(entry.cost_price, entry.sale_price)
