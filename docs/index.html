@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fala, Caixa! — O Gerente Inteligente do Seu Comércio no WhatsApp</title>
+  <meta name="description" content="Proteja sua margem de lucro, descubra o que está acabando na prateleira, cobre fiado com 1 toque no PIX e converse com o sistema do seu caixa 24h pelo WhatsApp." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="logo-simbolo.svg" />
+  <style>
+    :root {
+      --navy-950: #071126;
+      --navy-900: #0B1938;
+      --navy-800: #132857;
+      --royal-500: #2563EB;
+      --green-600: #059669;
+      --green-500: #10B981;
+      --green-400: #34D399;
+      --green-bg: #D1FAE5;
+      --amber-500: #F59E0B;
+      --amber-bg: #FEF3C7;
+      --amber-text: #B45309;
+      --red-500: #EF4444;
+      --blue-bg: #DBEAFE;
+      --blue-text: #1E40AF;
+      --bg-ice: #F4F7FB;
+      --text-dark: #0F172A;
+      --text-body: #334155;
+      --text-muted: #64748B;
+      --text-ondark: #CBD5E1;
+      --text-ondark-muted: #94A3B8;
+      --border-light: #E2E8F0;
+      --wa-bg: #0B141A;
+      --wa-header: #1F2C34;
+      --wa-out: #005C4B;
+      --shadow-card: 0 6px 20px rgba(15, 23, 42, 0.06);
+      --shadow-pop: 0 24px 48px rgba(0, 0, 0, 0.35);
+      --grad-green: linear-gradient(135deg, var(--green-500), var(--green-400));
+      --grad-navy: linear-gradient(135deg, var(--navy-950), var(--navy-800));
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-ice);
+      color: var(--text-dark);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+      background: var(--grad-green); color: #FFFFFF;
+      font-family: inherit; font-weight: 700; font-size: 16px;
+      border: none; border-radius: 12px; padding: 0 24px; height: 52px;
+      cursor: pointer; text-decoration: none;
+      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(16, 185, 129, 0.35); }
+
+    .btn-ghost {
+      display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+      background: transparent; color: #FFFFFF;
+      font-family: inherit; font-weight: 700; font-size: 15px;
+      border: 1.5px solid rgba(255,255,255,0.2); border-radius: 12px;
+      padding: 0 24px; height: 52px; cursor: pointer; text-decoration: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .btn-ghost:hover { border-color: rgba(255,255,255,0.45); background: rgba(255,255,255,0.05); }
+
+    .section-label {
+      font-size: 12px; font-weight: 700; letter-spacing: 3px;
+      color: var(--green-600); text-transform: uppercase;
+    }
+
+    /* ================= NAV ================= */
+    header {
+      background: rgba(7, 17, 38, 0.97);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .nav-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      height: 72px; gap: 20px;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .logo-mark { width: 36px; height: 35px; flex-shrink: 0; }
+    .logo-word { font-weight: 700; font-size: 18px; color: #FFFFFF; letter-spacing: -0.01em; }
+    .logo-word span { color: var(--green-400); }
+    .nav-links { display: flex; align-items: center; gap: 32px; }
+    .nav-links a {
+      color: var(--text-ondark); text-decoration: none;
+      font-size: 14px; font-weight: 500; transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--green-400); }
+    .nav-cta { height: 40px; padding: 0 20px; font-size: 14px; box-shadow: none; }
+
+    /* ================= HERO ================= */
+    .hero { background: var(--grad-navy); padding: 72px 0 88px; }
+    .hero-grid { display: grid; grid-template-columns: 1fr 380px; gap: 72px; align-items: center; }
+    .hero-copy { display: flex; flex-direction: column; gap: 24px; align-items: flex-start; }
+    .hero-chip {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2);
+      border-radius: 999px; padding: 8px 14px;
+      font-size: 12px; font-weight: 700; letter-spacing: 2px; color: var(--green-400);
+    }
+    .hero-chip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green-400); }
+    .hero-title {
+      font-size: 44px; font-weight: 800; line-height: 1.2; color: #FFFFFF;
+      letter-spacing: -0.02em;
+    }
+    .hero-title em { font-style: normal; color: var(--green-400); }
+    .hero-sub { font-size: 17px; line-height: 1.6; color: var(--text-ondark); max-width: 640px; }
+    .hero-actions { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+    .hero-trust { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
+    .hero-trust div { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--text-ondark-muted); }
+
+    /* Phone mock */
+    .phone {
+      background: var(--wa-bg); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 32px; overflow: hidden; box-shadow: var(--shadow-pop);
+    }
+    .phone-header {
+      background: var(--wa-header); padding: 16px 18px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .phone-header .mark { width: 32px; height: 31px; flex-shrink: 0; }
+    .phone-header h4 { font-size: 15px; font-weight: 700; color: #FFFFFF; }
+    .phone-header span { font-size: 12px; color: #8696A0; }
+    .phone-chat { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .phone-date {
+      align-self: center; background: var(--wa-header); border-radius: 8px;
+      padding: 5px 12px; font-size: 11px; font-weight: 700; letter-spacing: 1px; color: #8696A0;
+    }
+    .msg-in, .msg-out { max-width: 100%; padding: 14px; font-size: 13px; line-height: 1.55; }
+    .msg-in { background: var(--wa-header); color: #E9EDEF; border-radius: 4px 12px 12px 12px; }
+    .msg-out {
+      background: var(--wa-out); color: #FFFFFF; border-radius: 12px 4px 12px 12px;
+      align-self: flex-end; max-width: 300px; padding: 12px 14px;
+    }
+    .msg-in strong.t { color: #FFFFFF; display: block; margin-bottom: 8px; }
+    .msg-in p + p { margin-top: 4px; }
+    .msg-in .sep { margin-top: 8px; }
+    .msg-time { display: block; text-align: right; font-size: 11px; color: #8696A0; margin-top: 8px; }
+    .msg-out .msg-time { color: #A7F3D0; margin-top: 6px; }
+    .hl-red { color: var(--red-500); font-weight: 700; }
+
+    /* ================= COMPAT ================= */
+    .compat {
+      background: #FFFFFF; border-bottom: 1px solid var(--border-light);
+      padding: 40px 0; text-align: center;
+    }
+    .compat-label {
+      font-size: 12px; font-weight: 700; letter-spacing: 2px; color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+    .compat-chips { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+    .compat-chips span {
+      background: var(--bg-ice); border: 1px solid var(--border-light);
+      border-radius: 999px; padding: 8px 18px;
+      font-size: 14px; font-weight: 700; color: var(--navy-900);
+    }
+
+    /* ================= STATS ================= */
+    .stats { background: var(--navy-900); padding: 64px 0; }
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 48px;
+      justify-content: space-between;
+    }
+    .stat b {
+      display: block; font-size: 48px; font-weight: 800; color: var(--green-400);
+      line-height: 1.1; margin-bottom: 6px; letter-spacing: -0.02em;
+    }
+    .stat span { font-size: 13px; line-height: 1.5; color: var(--text-ondark); display: block; max-width: 220px; }
+
+    /* ================= FEATURES ================= */
+    .features { padding: 96px 0; }
+    .section-head { text-align: center; max-width: 640px; margin: 0 auto 48px; }
+    .section-head h2 {
+      font-size: 36px; font-weight: 800; color: var(--navy-900);
+      letter-spacing: -0.02em; margin: 14px 0;
+    }
+    .section-head p { font-size: 16px; line-height: 1.6; color: var(--text-muted); }
+    .features-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .fcard {
+      background: #FFFFFF; border: 1px solid var(--border-light); border-radius: 16px;
+      padding: 28px; box-shadow: var(--shadow-card);
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .fcard-head { display: flex; align-items: center; gap: 14px; }
+    .fcard-icon {
+      width: 48px; height: 48px; border-radius: 14px; background: var(--green-bg);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .fcard-badge { font-size: 12px; font-weight: 700; letter-spacing: 2px; color: var(--green-600); }
+    .fcard h3 { font-size: 20px; font-weight: 700; color: var(--navy-900); }
+    .fcard > p { font-size: 14px; line-height: 1.55; color: var(--text-muted); }
+    .fcard-quote {
+      background: var(--bg-ice); border-radius: 12px; padding: 14px;
+      font-size: 13px; line-height: 1.55; color: var(--text-body);
+    }
+
+    /* ================= DEMO ================= */
+    .demo { background: #FFFFFF; padding: 96px 0; }
+    .demo-grid { display: grid; grid-template-columns: 1fr 520px; gap: 72px; align-items: center; }
+    .demo-copy { display: flex; flex-direction: column; gap: 16px; align-items: flex-start; }
+    .demo-copy h2 { font-size: 34px; font-weight: 800; color: var(--navy-900); line-height: 1.2; letter-spacing: -0.02em; }
+    .demo-copy > p { font-size: 16px; line-height: 1.6; color: var(--text-muted); }
+    .qchips { display: flex; flex-direction: column; gap: 12px; width: 100%; margin-top: 8px; }
+    .qchip {
+      display: flex; gap: 12px; align-items: center; width: 100%;
+      background: var(--bg-ice); border: 1px solid var(--border-light); border-radius: 12px;
+      padding: 14px 18px; cursor: pointer; text-align: left;
+      font-family: inherit; font-size: 15px; font-weight: 700; color: var(--navy-900);
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .qchip:hover { border-color: var(--green-500); }
+    .qchip.active { border-color: var(--green-500); background: rgba(16,185,129,0.08); }
+    .demo-chat {
+      background: var(--bg-ice); border: 1px solid var(--border-light); border-radius: 20px;
+      padding: 24px; box-shadow: var(--shadow-card);
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .demo-chat-label { font-size: 11px; font-weight: 700; letter-spacing: 2px; color: var(--text-muted); }
+    .answers { display: flex; flex-direction: column; min-height: 300px; }
+    .answer { display: none; flex-direction: column; gap: 12px; }
+    .answer.visible { display: flex; }
+    .a-user {
+      align-self: flex-end; max-width: 320px;
+      background: var(--wa-out); color: #FFFFFF;
+      border-radius: 12px 4px 12px 12px; padding: 12px 14px; font-size: 14px;
+    }
+    .a-bot {
+      background: #FFFFFF; border: 1px solid var(--border-light);
+      border-radius: 4px 12px 12px 12px; padding: 14px;
+      font-size: 14px; line-height: 1.55; color: var(--text-body);
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .a-time { align-self: flex-end; font-size: 11px; color: var(--text-muted); }
+
+    /* ================= FIADO ================= */
+    .fiado { padding: 96px 0; }
+    .fiado-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .tier {
+      background: #FFFFFF; border: 1px solid var(--border-light); border-radius: 16px;
+      padding: 24px; box-shadow: var(--shadow-card);
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .tier-badge {
+      align-self: flex-start; border-radius: 999px; padding: 6px 12px;
+      font-size: 11px; font-weight: 700; letter-spacing: 1px;
+    }
+    .tier-badge.green { background: var(--green-bg); color: var(--green-600); }
+    .tier-badge.amber { background: var(--amber-bg); color: var(--amber-text); }
+    .tier-badge.blue { background: var(--blue-bg); color: var(--blue-text); }
+    .tier h3 { font-size: 18px; font-weight: 700; color: var(--navy-900); }
+    .tier > p { font-size: 14px; line-height: 1.55; color: var(--text-muted); }
+    .tier-line { height: 1px; background: var(--border-light); }
+    .tier-faz-label { font-size: 11px; font-weight: 700; letter-spacing: 2px; color: var(--green-600); }
+    .tier-faz { font-size: 14px; line-height: 1.55; color: var(--text-body); }
+
+    /* ================= PRICING ================= */
+    .pricing {
+      background: linear-gradient(135deg, var(--navy-950), var(--navy-900));
+      padding: 96px 0; text-align: center;
+    }
+    .pricing-chip {
+      display: inline-block; background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.25);
+      border-radius: 999px; padding: 8px 16px;
+      font-size: 12px; font-weight: 700; letter-spacing: 2px; color: var(--amber-500);
+      margin-bottom: 14px;
+    }
+    .pricing h2 { font-size: 36px; font-weight: 800; color: #FFFFFF; letter-spacing: -0.02em; }
+    .pricing > .wrap > p {
+      font-size: 16px; line-height: 1.6; color: var(--text-ondark);
+      max-width: 560px; margin: 14px auto 40px;
+    }
+    .price-card {
+      background: var(--navy-800); border: 1.5px solid rgba(16,185,129,0.35);
+      border-radius: 20px; padding: 36px; max-width: 520px; margin: 0 auto;
+      box-shadow: var(--shadow-pop); text-align: left;
+      display: flex; flex-direction: column; gap: 20px;
+    }
+    .price-head { display: flex; justify-content: space-between; align-items: center; }
+    .price-head b { font-size: 13px; font-weight: 700; letter-spacing: 2px; color: var(--green-400); }
+    .price-head span { font-size: 13px; color: var(--text-ondark-muted); }
+    .price-name { font-size: 18px; font-weight: 700; color: #FFFFFF; }
+    .price-value { display: flex; align-items: flex-end; gap: 8px; }
+    .price-value b { font-size: 48px; font-weight: 800; color: #FFFFFF; letter-spacing: -0.02em; line-height: 1; }
+    .price-value span { font-size: 15px; color: var(--text-ondark-muted); margin-bottom: 6px; }
+    .price-line { height: 1px; background: rgba(255,255,255,0.08); }
+    .price-list { display: flex; flex-direction: column; gap: 12px; list-style: none; }
+    .price-list li {
+      display: flex; gap: 10px; align-items: flex-start;
+      font-size: 14px; line-height: 1.5; color: #E2E8F0;
+    }
+    .price-list svg { margin-top: 3px; flex-shrink: 0; }
+    .price-card .btn-primary { width: 100%; }
+    .price-note { font-size: 12px; color: var(--text-ondark-muted); text-align: center; }
+
+    /* ================= ACTIVATE ================= */
+    .activate { background: #FFFFFF; padding: 96px 0; }
+    .activate-grid { display: grid; grid-template-columns: 1fr 520px; gap: 72px; align-items: center; }
+    .activate-copy { display: flex; flex-direction: column; gap: 16px; align-items: flex-start; }
+    .activate-copy h2 { font-size: 34px; font-weight: 800; color: var(--navy-900); line-height: 1.2; letter-spacing: -0.02em; }
+    .activate-copy > p { font-size: 16px; line-height: 1.6; color: var(--text-muted); }
+    .activate-lock { display: flex; gap: 8px; align-items: center; font-size: 13px; font-weight: 700; color: var(--text-body); }
+    .form-card {
+      background: #FFFFFF; border: 1px solid var(--border-light); border-radius: 20px;
+      padding: 28px; box-shadow: var(--shadow-card);
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .field { display: flex; flex-direction: column; gap: 8px; }
+    .field label { font-size: 13px; font-weight: 700; color: var(--navy-900); }
+    .field input, .field select {
+      height: 48px; background: var(--bg-ice); border: 1px solid var(--border-light);
+      border-radius: 12px; padding: 0 16px;
+      font-family: inherit; font-size: 14px; color: var(--text-dark);
+      outline: none; width: 100%; appearance: none;
+    }
+    .field input:focus, .field select:focus { border-color: var(--green-500); }
+    .field.select { position: relative; }
+    .field.select svg { position: absolute; right: 16px; top: 41px; pointer-events: none; }
+    .form-card .btn-primary { width: 100%; }
+    .hidden { display: none; }
+
+    /* ================= TRUST ================= */
+    .trust { padding: 64px 0; }
+    .trust-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+    .titem {
+      background: #FFFFFF; border: 1px solid var(--border-light); border-radius: 16px;
+      padding: 24px; display: flex; flex-direction: column; gap: 14px;
+    }
+    .titem-icon {
+      width: 44px; height: 44px; border-radius: 22px; background: var(--green-bg);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .titem h4 { font-size: 15px; font-weight: 700; color: var(--navy-900); }
+    .titem p { font-size: 13px; line-height: 1.55; color: var(--text-muted); }
+
+    /* ================= FOOTER ================= */
+    footer { background: var(--navy-950); padding: 32px 0; }
+    footer .wrap { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; text-align: center; }
+    footer p { font-size: 13px; color: var(--text-ondark-muted); }
+    footer p strong { color: #FFFFFF; }
+
+    /* ================= RESPONSIVE ================= */
+    @media (max-width: 1080px) {
+      .hero-grid, .demo-grid, .activate-grid { grid-template-columns: 1fr; gap: 48px; }
+      .phone, .demo-chat, .form-card { max-width: 520px; margin: 0 auto; width: 100%; }
+      .stats-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
+      .trust-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 760px) {
+      .nav-links { display: none; }
+      .hero { padding: 56px 0 64px; }
+      .hero-title { font-size: 32px; }
+      .features, .demo, .fiado, .pricing, .activate { padding: 64px 0; }
+      .section-head h2, .pricing h2 { font-size: 28px; }
+      .demo-copy h2, .activate-copy h2 { font-size: 26px; }
+      .features-grid, .fiado-grid { grid-template-columns: 1fr; }
+      .stat b { font-size: 38px; }
+      .hero-actions .btn-primary, .hero-actions .btn-ghost { width: 100%; }
+    }
+    @media (max-width: 560px) {
+      .stats-grid, .trust-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <!-- ================= NAV ================= -->
+  <header>
+    <div class="wrap nav-inner">
+      <a href="#" class="logo">
+        <svg class="logo-mark" viewBox="0 0 104 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Fala, Caixa!">
+          <defs>
+            <linearGradient id="fc-g1" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="104" y2="90">
+              <stop offset="0" stop-color="#10B981"/><stop offset="1" stop-color="#34D399"/>
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="104" height="90" rx="25" fill="url(#fc-g1)"/>
+          <path d="M18 80 L42 80 L24 98 Z" fill="url(#fc-g1)"/>
+          <g fill="#0B1938">
+            <rect x="18" y="35" width="9" height="20" rx="4.5"/>
+            <rect x="33" y="29" width="9" height="32" rx="4.5"/>
+            <rect x="48" y="24" width="9" height="42" rx="4.5"/>
+            <rect x="63" y="29" width="9" height="32" rx="4.5"/>
+            <rect x="78" y="35" width="9" height="20" rx="4.5"/>
+          </g>
+        </svg>
+        <div class="logo-word">Fala, <span>Caixa!</span></div>
+      </a>
+      <nav class="nav-links">
+        <a href="#funcionalidades">Funcionalidades</a>
+        <a href="#demonstracao">Demonstração</a>
+        <a href="#fiado">Régua de fiado</a>
+        <a href="#preco">Preço</a>
+      </nav>
+      <a href="#ativar" class="btn-primary nav-cta">Começar grátis</a>
+    </div>
+  </header>
+
+  <!-- ================= HERO ================= -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <div class="hero-chip"><span class="dot"></span>GERENTE INTELIGENTE NO WHATSAPP</div>
+        <h1 class="hero-title">Seu caixa agora <em>fala com você</em>,<br/>protege seu lucro e cobra<br/>o fiado no PIX.</h1>
+        <p class="hero-sub">Sem trocar o sistema do seu caixa e sem abrir painéis complicados. Todo dia às 08h00 o Fala, Caixa! entrega no seu WhatsApp as margens defasadas, o estoque no limite e as cobranças de fiado prontas para encaminhar.</p>
+        <div class="hero-actions">
+          <a href="#ativar" class="btn-primary">Começar 14 dias grátis <svg fill="#FFFFFF" width="16" height="16" style="flex-shrink:0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M438.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L338.8 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l306.7 0L233.4 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l160-160z"/></svg></a>
+          <a href="#demonstracao" class="btn-ghost"><svg fill="#FFFFFF" width="13" height="13" style="flex-shrink:0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg> Ver demonstração</a>
+        </div>
+        <div class="hero-trust">
+          <div><svg fill="#34D399" width="13" height="13" style="flex-shrink:0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></svg> Sem cartão de crédito</div>
+          <div><svg fill="#34D399" width="13" height="13" style="flex-shrink:0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></svg> 100% somente leitura</div>
+          <div><svg fill="#34D399" width="13" height="13" style="flex-shrink:0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></svg> Instalação em 5 minutos</div>
+        </div>
+      </div>
+
+      <div class="phone">
+        <div class="phone-header">
+          <svg class="mark" viewBox="0 0 104 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="fc-g2" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="104" y2="90">
+                <stop offset="0" stop-color="#10B981"/><stop offset="1" stop-color="#34D399"/>
+              </linearGradient>
+            </defs>
+            <rect x="0" y="0" width="104" height="90" rx="25" fill="url(#fc-g2)"/>
+            <path d="M18 80 L42 80 L24 98 Z" fill="url(#fc-g2)"/>
+            <g fill="#0B1938">
+              <rect x="18" y="35" width="9" height="20" rx="4.5"/>
+              <rect x="33" y="29" width="9" height="32" rx="4.5"/>
+              <rect x="48" y="24" width="9" height="42" rx="4.5"/>
+              <rect x="63" y="29" width="9" height="32" rx="4.5"/>
+              <rect x="78" y="35" width="9" height="20" rx="4.5"/>
+            </g>
+          </svg>
+          <div>
+            <h4>Fala, Caixa!</h4>
+            <span>online</span>
+          </div>
+        </div>
+        <div class="phone-chat">
+          <div class="phone-date">HOJE</div>
+          <div class="msg-in">
+            <strong class="t">📦 RESUMO INTELIGENTE DO CAIXA</strong>
+            <p>🚨 <strong>Querosene 200ml:</strong> margem <span class="hl-red">-8% (prejuízo)</span></p>
+            <p>👉 Sugerido p/ 30%: <strong>R$ 5,40</strong> (atual R$ 3,50)</p>
+            <p class="sep">📉 <strong>Estoque baixo:</strong> Creme de Leite (1 un), Água 20L (2 un)</p>
+            <p class="sep">⚠️ <strong>Fiado +30 dias:</strong> Marcos (R$ 142,00) — travar novo fiado</p>
+            <span class="msg-time">08:00 ✓✓</span>
+          </div>
+          <div class="msg-out">
+            Perfeito! Já encaminhei a cobrança do Marcos com o PIX.
+            <span class="msg-time">08:04 ✓✓</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= COMPATIBILIDADE ================= -->
+  <section class="compat">
+    <div class="wrap">
+      <div class="compat-label">COMPATÍVEL COM QUALQUER SISTEMA DE CAIXA, ERP OU PLANILHA</div>
+      <div class="compat-chips">
+        <span>Bling</span><span>Omie</span><span>Hiper</span><span>SysPDV</span>
+        <span>MarketUP</span><span>Nextar</span><span>Excel / CSV</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ESTATÍSTICAS ================= -->
+  <section class="stats">
+    <div class="wrap stats-grid">
+      <div class="stat"><b>-8%</b><span>Margem em prejuízo flagrada em produto ativo na gôndola</span></div>
+      <div class="stat"><b>51</b><span>Produtos no limite mínimo de estoque, prestes a zerar</span></div>
+      <div class="stat"><b>R$ 331,40</b><span>Em fiados vencidos há +30 dias, com PIX pronto p/ cobrar</span></div>
+      <div class="stat"><b>1.137</b><span>Itens inativos filtrados para não poluir seu WhatsApp</span></div>
+    </div>
+  </section>
+
+  <!-- ================= FUNCIONALIDADES ================= -->
+  <section class="features" id="funcionalidades">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="section-label">Funcionalidades</div>
+        <h2>Quatro guardiões do seu lucro</h2>
+        <p>O Fala, Caixa! vigia margem, estoque e fiado todos os dias, e ainda responde suas perguntas a qualquer hora no WhatsApp.</p>
+      </div>
+      <div class="features-grid">
+        <div class="fcard">
+          <div class="fcard-head">
+            <div class="fcard-icon"><svg fill="#059669" width="22" height="22" style="flex-shrink:0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M256 0c4.6 0 9.2 1 13.4 2.9L457.7 82.8c22 9.3 38.4 31 38.3 57.2c-.5 99.2-41.3 280.7-213.6 363.2c-16.7 8-36.1 8-52.8 0C57.3 420.7 16.5 239.2 16 140c-.1-26.2 16.3-47.9 38.3-57.2L242.7 2.9C246.8 1 251.4 0 256 0zm0 66.8V444.8C394 378 431.1 230.1 432 141.4L256 66.8l0 0z"/></svg></div>
+            <div class="fcard-badge">ANTI-PREJUÍZO</div>
+          </div>
+          <h3>Alerta de margem oculta</h3>
+          <p>Quando o fornecedor sobe o preço na nota e a gôndola fica defasada, você recebe o aviso na hora, com o novo preço sugerido para manter 30% de margem.</p>
+          <div class="fcard-quote"><strong>Cerveja Lata 350ml:</strong> custo subiu para R$ 3,12 e a margem caiu para 16%. Sugestão p/ manter 30%: <strong>R$ 4,50</strong> (atual R$ 3,75).</div>
+        </div>
+        <div class="fcard">
+          <div class="fcard-head">
+            <div class="fcard-icon"><svg fill="#059669" width="22" height="22" style="flex-shrink:0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><path d="M248 0H208c-26.5 0-48 21.5-48 48V160c0 35.3 28.7 64 64 64H352c35.3 0 64-28.7 64-64V48c0-26.5-21.5-48-48-48H328V80c0 8.8-7.2 16-16 16H264c-8.8 0-16-7.2-16-16V0zM64 256c-35.3 0-64 28.7-64 64V448c0 35.3 28.7 64 64 64H224c35.3 0 64-28.7 64-64V320c0-35.3-28.7-64-64-64H184v80c0 8.8-7.2 16-16 16H120c-8.8 0-16-7.2-16-16V256H64zM352 512H512c35.3 0 64-28.7 64-64V320c0-35.3-28.7-64-64-64H472v80c0 8.8-7.2 16-16 16H408c-8.8 0-16-7.2-16-16V256H352c-15 0-28.8 5.1-39.7 13.8c4.9 10.4 7.7 22 7.7 34.2V464c0 12.2-2.8 23.8-7.7 34.2C323.2 506.9 337 512 352 512z"/></svg></div>
+            <div class="fcard-badge">ANTI-RUPTURA</div>
+          </div>
+          <h3>Alerta de estoque baixo</h3>
+          <p>Avisa quais produtos de giro estão prestes a acabar na prateleira antes que o cliente procure e não encontre, respeitando o mínimo de cada item.</p>
+          <div class="fcard-quote"><strong>Água Garrafão 20L:</strong> restam apenas 2 unidades (mínimo ideal: 3). <strong>Creme de Leite:</strong> resta apenas 1 unidade (mínimo ideal: 8).</div>
+        </div>
+        <div class="fcard">
+          <div class="fcard-head">
+            <div class="fcard-icon"><svg fill="#059669" width="22" height="22" style="flex-shrink:0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><path d="M312 24V34.5c6.4 1.2 12.6 2.7 18.2 4.2c12.8 3.4 20.4 16.6 17 29.4s-16.6 20.4-29.4 17c-10.9-2.9-21.1-4.9-30.2-5c-7.3-.1-14.7 1.7-19.4 4.4c-2.1 1.3-3.1 2.4-3.5 3c-.3 .5-.7 1.2-.7 2.8c0 .3 0 .5 0 .6c.2 .2 .9 1.2 3.3 2.6c5.8 3.5 14.4 6.2 27.4 10.1l.9 .3c11.1 3.3 25.9 7.8 37.9 15.3c13.7 8.6 26.1 22.9 26.4 44.9c.3 22.5-11.4 38.9-26.7 48.5c-6.7 4.1-13.9 7-21.3 8.8V232c0 13.3-10.7 24-24 24s-24-10.7-24-24V220.6c-9.5-2.3-18.2-5.3-25.6-7.8c-2.1-.7-4.1-1.4-6-2c-12.6-4.2-19.4-17.8-15.2-30.4s17.8-19.4 30.4-15.2c2.6 .9 5 1.7 7.3 2.5c13.6 4.6 23.4 7.9 33.9 8.3c8 .3 15.1-1.6 19.2-4.1c1.9-1.2 2.8-2.2 3.2-2.9c.4-.6 .9-1.8 .8-4.1l0-.2c0-1 0-2.1-4-4.6c-5.7-3.6-14.3-6.4-27.1-10.3l-1.9-.6c-10.8-3.2-25-7.5-36.4-14.4c-13.5-8.1-26.5-22-26.6-44.1c-.1-22.9 12.9-38.6 27.7-47.4c6.4-3.8 13.3-6.4 20.2-8.2V24c0-13.3 10.7-24 24-24s24 10.7 24 24zM568.2 336.3c13.1 17.8 9.3 42.8-8.5 55.9L433.1 485.5c-23.4 17.2-51.6 26.5-80.7 26.5H192 32c-17.7 0-32-14.3-32-32V416c0-17.7 14.3-32 32-32H68.8l44.9-36c22.7-18.2 50.9-28 80-28H272h16 64c17.7 0 32 14.3 32 32s-14.3 32-32 32H288 272c-8.8 0-16 7.2-16 16s7.2 16 16 16H392.6l119.7-88.2c17.8-13.1 42.8-9.3 55.9 8.5zM193.6 384l0 0-.9 0c.3 0 .6 0 .9 0z"/></svg></div>
+            <div class="fcard-badge">ANTI-CALOTE</div>
+          </div>
+          <h3>Cobrança de fiado com PIX</h3>
+          <p>Nada de listas emboladas. Você recebe uma mensagem separada para cada cliente atrasado, com texto educado, valor exato e sua Chave PIX. É só encaminhar.</p>
+          <div class="fcard-quote">"Olá, <strong>Seu João</strong>, tudo bem? Passando para lembrar do saldo em aberto de <strong>R$ 99,75</strong>. Chave PIX: <strong>84987019079</strong>. Obrigado!"</div>
+        </div>
+        <div class="fcard">
+          <div class="fcard-head">
+            <div class="fcard-icon"><svg fill="#059669" width="22" height="22" style="flex-shrink:0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path d="M320 0c17.7 0 32 14.3 32 32V96H472c39.8 0 72 32.2 72 72V440c0 39.8-32.2 72-72 72H168c-39.8 0-72-32.2-72-72V168c0-39.8 32.2-72 72-72H288V32c0-17.7 14.3-32 32-32zM208 384c-8.8 0-16 7.2-16 16s7.2 16 16 16h32c8.8 0 16-7.2 16-16s-7.2-16-16-16H208zm96 0c-8.8 0-16 7.2-16 16s7.2 16 16 16h32c8.8 0 16-7.2 16-16s-7.2-16-16-16H304zm96 0c-8.8 0-16 7.2-16 16s7.2 16 16 16h32c8.8 0 16-7.2 16-16s-7.2-16-16-16H400zM264 256a40 40 0 1 0 -80 0 40 40 0 1 0 80 0zm152 40a40 40 0 1 0 0-80 40 40 0 1 0 0 80zM48 224H64V416H48c-26.5 0-48-21.5-48-48V272c0-26.5 21.5-48 48-48zm544 0c26.5 0 48 21.5 48 48v96c0 26.5-21.5 48-48 48H576V224h16z"/></svg></div>
+            <div class="fcard-badge">CONSULTOR 24H</div>
+          </div>
+          <h3>Pergunte qualquer coisa</h3>
+          <p>Na distribuidora ou na rua, mande uma mensagem perguntando o estoque de um item, quanto alguém deve ou simule um preço novo na hora.</p>
+          <div class="fcard-quote"><strong>Você:</strong> "quantas Coca 2L tem no estoque e quanto o Bruno deve?" <strong>Fala, Caixa!:</strong> "tem 16 un de Coca 2L. O Bruno deve R$ 376,85."</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DEMONSTRAÇÃO ================= -->
+  <section class="demo" id="demonstracao">
+    <div class="wrap demo-grid">
+      <div class="demo-copy">
+        <div class="section-label">Demonstração</div>
+        <h2>Experimente o Consultor 24h</h2>
+        <p>Clique em uma pergunta e veja como o Fala, Caixa! responde na hora, com o motor de IA conectado ao seu caixa em modo 100% leitura.</p>
+        <div class="qchips">
+          <button type="button" class="qchip active" onclick="showAnswer(1, this)"><svg fill="#059669" width="16" height="16" style="flex-shrink:0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M256 448c141.4 0 256-93.1 256-208S397.4 32 256 32S0 125.1 0 240c0 45.1 17.7 86.8 47.7 120.9c-1.9 24.5-11.4 46.3-21.4 62.9c-5.5 9.2-11.1 16.6-15.2 21.6c-2.1 2.5-3.7 4.4-4.9 5.7c-.6 .6-1 1.1-1.3 1.4l-.3 .3 0 0 0 0 0 0 0 0c-4.6 4.6-5.9 11.4-3.4 17.4c2.5 6 8.3 9.9 14.8 9.9c28.7 0 57.6-8.9 81.6-19.3c22.9-10 42.4-21.9 54.3-30.6c31.8 11.5 67 17.9 104.1 17.9zM128 208a32 32 0 1 1 0 64 32 32 0 1 1 0-64zm128 0a32 32 0 1 1 0 64 32 32 0 1 1 0-64zm96 32a32 32 0 1 1 64 0 32 32 0 1 1 -64 0z"/></svg> Quanto o Bruno está devendo?</button>
+          <button type="button" class="qchip" onclick="showAnswer(2, this)"><svg fill="#059669" width="16" height="16" style="flex-shrink:0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M256 448c141.4 0 256-93.1 256-208S397.4 32 256 32S0 125.1 0 240c0 45.1 17.7 86.8 47.7 120.9c-1.9 24.5-11.4 46.3-21.4 62.9c-5.5 9.2-11.1 16.6-15.2 21.6c-2.1 2.5-3.7 4.4-4.9 5.7c-.6 .6-1 1.1-1.3 1.4l-.3 .3 0 0 0 0 0 0 0 0c-4.6 4.6-5.9 11.4-3.4 17.4c2.5 6 8.3 9.9 14.8 9.9c28.7 0 57.6-8.9 81.6-19.3c22.9-10 42.4-21.9 54.3-30.6c31.8 11.5 67 17.9 104.1 17.9zM128 208a32 32 0 1 1 0 64 32 32 0 1 1 0-64zm128 0a32 32 0 1 1 0 64 32 32 0 1 1 0-64zm96 32a32 32 0 1 1 64 0 32 32 0 1 1 -64 0z"/></svg> Quantas Coca 2L tem no estoque?</button>
+          <button type="button" class="qchip" onclick="showAnswer(3, this)"><svg fill="#059669" width="16" height="16" style="flex-shrink:0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M256 448c141.4 0 256-93.1 256-208S397.4 32 256 32S0 125.1 0 240c0 45.1 17.7 86.8 47.7 120.9c-1.9 24.5-11.4 46.3-21.4 62.9c-5.5 9.2-11.1 16.6-15.2 21.6c-2.1 2.5-3.7 4.4-4.9 5.7c-.6 .6-1 1.1-1.3 1.4l-.3 .3 0 0 0 0 0 0 0 0c-4.6 4.6-5.9 11.4-3.4 17.4c2.5 6 8.3 9.9 14.8 9.9c28.7 0 57.6-8.9 81.6-19.3c22.9-10 42.4-21.9 54.3-30.6c31.8 11.5 67 17.9 104.1 17.9zM128 208a32 32 0 1 1 0 64 32 32 0 1 1 0-64zm128 0a32 32 0 1 1 0 64 32 32 0 1 1 0-64zm96 32a32 32 0 1 1 64 0 32 32 0 1 1 -64 0z"/></svg> Gera a mensagem de cobrança com PIX</button>
+        </div>
+      </div>
+
+      <div class="demo-chat">
+        <div class="demo-chat-label">CONVERSA COM O FALA, CAIXA!</div>
+        <div class="answers">
+          <div class="answer visible" id="ans1">
+            <div class="a-user">Quanto o Bruno está devendo?</div>
+            <div class="a-bot">
+              <p><strong>💳 Consulta de Fiado — Bruno</strong></p>
+              <p>Total em aberto: <strong>R$ 376,85</strong></p>
+              <p>📲 Mensagem individual pronta para você encaminhar, já com a sua Chave PIX.</p>
+              <span class="a-time">Agora ✓✓</span>
+            </div>
+          </div>
+          <div class="answer" id="ans2">
+            <div class="a-user">Quantas Coca 2L tem no estoque?</div>
+            <div class="a-bot">
+              <p><strong>📦 Estoque — Coca-Cola 2L</strong></p>
+              <p>Disponível: <strong>16 unidades</strong></p>
+              <p>Giro dos últimos 7 dias: 22 un. Sugestão: repor <strong>1 fardo</strong> no próximo pedido.</p>
+              <span class="a-time">Agora ✓✓</span>
+            </div>
+          </div>
+          <div class="answer" id="ans3">
+            <div class="a-user">Gera a mensagem de cobrança com PIX</div>
+            <div class="a-bot">
+              <p>Olá, <strong>Bruno</strong>, tudo bem? Passando aqui da <strong>Conveniência Central</strong> para lembrar do saldo em aberto de <strong>R$ 376,85</strong>.</p>
+              <p>Você pode acertar na loja ou pelo PIX: <strong>84987019079</strong>. Obrigado! 🙏</p>
+              <span class="a-time">Agora ✓✓</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= RÉGUA DE FIADO ================= -->
+  <section class="fiado" id="fiado">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="section-label">Régua de fiado</div>
+        <h2>Cada atraso, uma reação diferente</h2>
+        <p>O Fala, Caixa! identifica o perfil de cada cliente atrasado e age do jeito certo para recuperar o valor sem perder o cliente.</p>
+      </div>
+      <div class="fiado-grid">
+        <div class="tier">
+          <span class="tier-badge green">NÍVEL 1 — MENSAGEM PIX INDIVIDUAL</span>
+          <h3>O cliente sumido</h3>
+          <p>Passou de 30 dias de atraso e parou de aparecer na loja por esquecimento ou vergonha.</p>
+          <div class="tier-line"></div>
+          <div class="tier-faz-label">O QUE O FALA, CAIXA! FAZ</div>
+          <div class="tier-faz">Envia uma mensagem separada só dele, com texto amigável, valor exato e sua Chave PIX pronta para encaminhar.</div>
+        </div>
+        <div class="tier">
+          <span class="tier-badge amber">NÍVEL 2 — ALERTA NO CAIXA</span>
+          <h3>O cara-de-pau</h3>
+          <p>Deve há mais de 30 dias, mas continua comprando normalmente na loja sem tocar no assunto da conta antiga.</p>
+          <div class="tier-line"></div>
+          <div class="tier-faz-label">O QUE O FALA, CAIXA! FAZ</div>
+          <div class="tier-faz">Marca "[Atenção Caixa] Travar novo fiado" no topo do resumo, bloqueando novas notas até a conta ser acertada.</div>
+        </div>
+        <div class="tier">
+          <span class="tier-badge blue">NÍVEL 3 — PRESERVA O CLIENTE FIEL</span>
+          <h3>O bom pagador habitual</h3>
+          <p>Atrasou pontualmente este mês, mas tem histórico comprovado de pagamentos em dia na loja.</p>
+          <div class="tier-line"></div>
+          <div class="tier-faz-label">O QUE O FALA, CAIXA! FAZ</div>
+          <div class="tier-faz">Gera uma mensagem individual suave de acompanhamento, cobrando sem perder a amizade com o cliente fiel.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PREÇO ================= -->
+  <section class="pricing" id="preco">
+    <div class="wrap">
+      <div class="pricing-chip">14 DIAS GRÁTIS PARA TESTAR</div>
+      <h2>Um plano. Tudo incluso.</h2>
+      <p>Gerente diário e Consultor IA 24h trabalhando pelo seu lucro, pelo preço de um cafezinho por dia.</p>
+      <div class="price-card">
+        <div class="price-head"><b>PLANO ÚNICO</b><span>Fala, Caixa! Completo</span></div>
+        <div class="price-name">Gerente diário + Consultor IA 24h</div>
+        <div class="price-value"><b>R$ 67</b><span>/mês após o teste grátis</span></div>
+        <div class="price-line"></div>
+        <ul class="price-list">
+          <li><svg fill="#34D399" width="14" height="14" style="flex-shrink:0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></svg> Resumo diário às 08h00 com margens defasadas e novo preço sugerido</li>
+          <li><svg fill="#34D399" width="14" height="14" style="flex-shrink:0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></svg> Alerta de estoque baixo antes de zerar a prateleira</li>
+          <li><svg fill="#34D399" width="14" height="14" style="flex-shrink:0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></svg> Régua de fiado com mensagens individuais e sua Chave PIX</li>
+          <li><svg fill="#34D399" width="14" height="14" style="flex-shrink:0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></svg> Consultor IA 24h para estoque, dívidas e simulação de preços</li>
+          <li><svg fill="#34D399" width="14" height="14" style="flex-shrink:0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></svg> Instalação assistida inclusa, pronta em 5 minutos</li>
+        </ul>
+        <a href="#ativar" class="btn-primary">Começar meus 14 dias grátis</a>
+        <div class="price-note">Equivale a R$ 2,23 por dia. Sem cartão de crédito, cancele quando quiser.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ATIVAÇÃO ================= -->
+  <section class="activate" id="ativar">
+    <div class="wrap activate-grid">
+      <div class="activate-copy">
+        <div class="section-label">Ativação rápida pelo WhatsApp</div>
+        <h2>Ative seus 14 dias grátis em 1 minuto</h2>
+        <p>Preencha os dados da sua loja e fale direto com nossa equipe no WhatsApp para liberarmos seu teste gratuito.</p>
+        <div class="activate-lock"><svg fill="#059669" width="14" height="14" style="flex-shrink:0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M144 144v48H304V144c0-44.2-35.8-80-80-80s-80 35.8-80 80zM80 192V144C80 64.5 144.5 0 224 0s144 64.5 144 144v48h16c35.3 0 64 28.7 64 64V448c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V256c0-35.3 28.7-64 64-64H80z"/></svg> Não pedimos cartão de crédito para começar</div>
+      </div>
+
+      <div class="form-card">
+        <div class="field">
+          <label for="storeNameInput">Nome da loja</label>
+          <input type="text" id="storeNameInput" placeholder="Nome do seu mercadinho ou conveniência" />
+        </div>
+        <div class="field select">
+          <label for="systemSelect">Sistema usado no caixa</label>
+          <select id="systemSelect" onchange="toggleCustomSystem()">
+            <option value="" disabled selected>Selecione o sistema ou planilha</option>
+            <option value="Sistema de PDV / Caixa Local">Sistema de PDV / Caixa de Mercado ou Conveniência</option>
+            <option value="Nextar (Nex)">Nextar (Nex)</option>
+            <option value="Bling">Bling ERP</option>
+            <option value="Omie">Omie</option>
+            <option value="Hiper">Hiper</option>
+            <option value="SysPDV / Alterdata">SysPDV / Alterdata</option>
+            <option value="MarketUP">MarketUP</option>
+            <option value="Planilhas (Excel / CSV)">Planilhas (Excel / Google Sheets)</option>
+            <option value="Outro">Outro sistema (digitar abaixo)</option>
+          </select>
+          <svg fill="#64748B" width="14" height="14" style="flex-shrink:0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z"/></svg>
+        </div>
+        <div class="field hidden" id="customSystemGroup">
+          <label for="customSystemInput">Qual o nome do seu sistema?</label>
+          <input type="text" id="customSystemInput" placeholder="Digite o nome do sistema que você usa..." />
+        </div>
+        <div class="field select">
+          <label for="painSelect">Maior prioridade hoje</label>
+          <select id="painSelect">
+            <option value="Reduzir prejuízo com margens">Reduzir prejuízo com margens</option>
+            <option value="Recuperar o fiado atrasado com mensagens PIX">Recuperar o fiado atrasado com mensagens PIX</option>
+            <option value="Saber o que está acabando no estoque antes de zerar">Saber o que está acabando no estoque antes de zerar</option>
+            <option value="Tudo completo (Margem + Estoque + Fiado PIX + Consultor 24h)">Tudo completo (Margem + Estoque + Fiado PIX + Consultor 24h)</option>
+          </select>
+          <svg fill="#64748B" width="14" height="14" style="flex-shrink:0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z"/></svg>
+        </div>
+        <button type="button" onclick="sendActivationWhatsApp()" class="btn-primary"><svg fill="#FFFFFF" width="18" height="18" style="flex-shrink:0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/></svg> Ativar pelo WhatsApp</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CONFIANÇA ================= -->
+  <section class="trust">
+    <div class="wrap trust-grid">
+      <div class="titem">
+        <div class="titem-icon"><svg fill="#059669" width="20" height="20" style="flex-shrink:0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M144 144v48H304V144c0-44.2-35.8-80-80-80s-80 35.8-80 80zM80 192V144C80 64.5 144.5 0 224 0s144 64.5 144 144v48h16c35.3 0 64 28.7 64 64V448c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V256c0-35.3 28.7-64 64-64H80z"/></svg></div>
+        <h4>100% somente leitura</h4>
+        <p>Trava de segurança no código. Apenas lê os dados, sem jamais alterar ou travar o seu caixa.</p>
+      </div>
+      <div class="titem">
+        <div class="titem-icon"><svg fill="#059669" width="20" height="20" style="flex-shrink:0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M105.1 202.6c7.7-21.8 20.2-42.3 37.8-59.8c62.5-62.5 163.8-62.5 226.3 0L386.3 160H352c-17.7 0-32 14.3-32 32s14.3 32 32 32H463.5c0 0 0 0 0 0h.4c17.7 0 32-14.3 32-32V80c0-17.7-14.3-32-32-32s-32 14.3-32 32v35.2L414.4 97.6c-87.5-87.5-229.3-87.5-316.8 0C73.2 122 55.6 150.7 44.8 181.4c-5.9 16.7 2.9 34.9 19.5 40.8s34.9-2.9 40.8-19.5zM39 289.3c-5 1.5-9.8 4.2-13.7 8.2c-4 4-6.7 8.8-8.1 14c-.3 1.2-.6 2.5-.8 3.8c-.3 1.7-.4 3.4-.4 5.1V432c0 17.7 14.3 32 32 32s32-14.3 32-32V396.9l17.6 17.5 0 0c87.5 87.4 229.3 87.4 316.7 0c24.4-24.4 42.1-53.1 52.9-83.7c5.9-16.7-2.9-34.9-19.5-40.8s-34.9 2.9-40.8 19.5c-7.7 21.8-20.2 42.3-37.8 59.8c-62.5 62.5-163.8 62.5-226.3 0l-.1-.1L125.6 352H160c17.7 0 32-14.3 32-32s-14.3-32-32-32H48.4c-1.6 0-3.2 .1-4.8 .3s-3.1 .5-4.6 1z"/></svg></div>
+        <h4>Sem trocar de sistema</h4>
+        <p>Você e seus funcionários continuam usando o programa atual da loja exatamente como hoje.</p>
+      </div>
+      <div class="titem">
+        <div class="titem-icon"><svg fill="#059669" width="20" height="20" style="flex-shrink:0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M16 64C16 28.7 44.7 0 80 0H304c35.3 0 64 28.7 64 64V448c0 35.3-28.7 64-64 64H80c-35.3 0-64-28.7-64-64V64zM144 448c0 8.8 7.2 16 16 16h64c8.8 0 16-7.2 16-16s-7.2-16-16-16H160c-8.8 0-16 7.2-16 16zM304 64H80V384H304V64z"/></svg></div>
+        <h4>Zero painel complicado</h4>
+        <p>Sem gráficos difíceis nem senhas novas. Tudo chega mastigado no WhatsApp que você já usa.</p>
+      </div>
+      <div class="titem">
+        <div class="titem-icon"><svg fill="#059669" width="20" height="20" style="flex-shrink:0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path d="M96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM0 482.3C0 383.8 79.8 304 178.3 304h91.4C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7H29.7C13.3 512 0 498.7 0 482.3zM625 177L497 305c-9.4 9.4-24.6 9.4-33.9 0l-64-64c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l47 47L591 143c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z"/></svg></div>
+        <h4>Você no comando</h4>
+        <p>As mensagens de fiado vêm prontas no seu WhatsApp e você escolhe para qual cliente encaminhar.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FOOTER ================= -->
+  <footer>
+    <div class="wrap">
+      <p><strong>Fala, Caixa!</strong> — O Gerente Inteligente do Seu Comércio no WhatsApp. Operação 100% Segura e Somente-Leitura.</p>
+    </div>
+  </footer>
+
+  <script>
+    // Demonstração: alterna a conversa exibida
+    function showAnswer(n, btnEl) {
+      document.querySelectorAll('.qchip').forEach(b => b.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+      document.querySelectorAll('.answer').forEach(a => a.classList.remove('visible'));
+      document.getElementById('ans' + n).classList.add('visible');
+    }
+
+    // Select "Outro sistema"
+    function toggleCustomSystem() {
+      const sel = document.getElementById('systemSelect').value;
+      document.getElementById('customSystemGroup').classList.toggle('hidden', sel !== 'Outro');
+    }
+
+    // Ativação via WhatsApp
+    function sendActivationWhatsApp() {
+      const store = document.getElementById('storeNameInput').value.trim() || 'Minha Loja';
+      const selSys = document.getElementById('systemSelect').value;
+      const customSys = document.getElementById('customSystemInput').value.trim();
+      const finalSys = (selSys === 'Outro' && customSys) ? customSys : (selSys || 'Não informado');
+      const pain = document.getElementById('painSelect').value;
+
+      const msg = `Oi! Vi o site do *Fala, Caixa!* e quero ativar meus *14 Dias Grátis*!\n\n🏪 *Loja:* ${store}\n💻 *Sistema atual:* ${finalSys}\n🎯 *Foco principal:* ${pain}`;
+      window.open(`https://wa.me/5584994635031?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
+    }
+  </script>
+</body>
+</html>
