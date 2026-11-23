@@ -12,10 +12,10 @@ Segurança Arquitetural:
 
 from __future__ import annotations
 
-import base64
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 import json
+import os
 from typing import Any, Callable
 import urllib.error
 import urllib.parse
@@ -41,9 +41,19 @@ ALLOWED_POST_READ_PATTERNS = (
     "/historic",
 )
 
-NEX_AUTH_BASIC_HEADER = base64.b64encode(
-    b"NEX-AUTH:aPbueYludOVnzmN0a891dG2rZW=="
-).decode("ascii")
+def _nex_basic_auth_header() -> str:
+    """Credencial de cliente da API Nextar (Basic auth), lida do ambiente.
+
+    O valor NUNCA fica no código-fonte: configure NEX_WEB_BASIC_AUTH no .env
+    (credencial Basic no formato base64 fornecida pela integração Nextar).
+    """
+    value = os.environ.get("NEX_WEB_BASIC_AUTH", "").strip()
+    if not value:
+        raise ValueError(
+            "Para autenticar no Nex Web com e-mail/senha, defina NEX_WEB_BASIC_AUTH "
+            "no arquivo .env (credencial Basic da integração Nextar)."
+        )
+    return value
 
 
 def _strip_tz(dt: datetime | None) -> datetime | None:
@@ -180,7 +190,7 @@ class NexWebReadOnlyCollector(BaseNexCollector):
 
         if self.email and self.password and not self.token:
             auth_headers = {
-                "Authorization": f"Basic {NEX_AUTH_BASIC_HEADER}",
+                "Authorization": f"Basic {_nex_basic_auth_header()}",
                 "X-Requested-With": "XMLHttpRequest",
             }
             payload_candidates = [

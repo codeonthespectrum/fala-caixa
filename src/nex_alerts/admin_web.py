@@ -12,11 +12,14 @@ import argparse
 from dataclasses import replace
 from datetime import datetime
 from decimal import Decimal
+import hmac
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
+import os
 from pathlib import Path
 import re
+import secrets
 from typing import Any
 from urllib.parse import urlparse
 
@@ -287,7 +290,40 @@ def _dashboard_html() -> str:
 
   <div id="toast"></div>
 
+  <div id="login-overlay" style="display:none;position:fixed;inset:0;background:rgba(7,17,38,.85);z-index:100;align-items:center;justify-content:center;">
+    <form onsubmit="submitLogin(event)" style="background:#fff;padding:28px;border-radius:14px;max-width:360px;width:90%;">
+      <h2 style="margin:0 0 8px;font-size:18px;">🔒 Painel restrito</h2>
+      <p style="font-size:13px;color:#64748B;margin:0 0 12px;">Informe o token de acesso do painel (definido em FALACAIXA_ADMIN_TOKEN no .env ou impresso no terminal ao subir o painel).</p>
+      <input id="token-input" type="password" placeholder="Token de acesso" style="margin-bottom:12px" />
+      <button type="submit" class="primary" style="width:100%;padding:11px">Entrar</button>
+    </form>
+  </div>
+
   <script>
+    const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+    let adminToken = localStorage.getItem("falacaixa_admin_token") || "";
+    const urlToken = new URLSearchParams(location.search).get("token");
+    if (urlToken) {
+      adminToken = urlToken;
+      localStorage.setItem("falacaixa_admin_token", urlToken);
+      history.replaceState(null, "", location.pathname);
+    }
+
+    function showLogin() {
+      document.getElementById("login-overlay").style.display = "flex";
+    }
+
+    function submitLogin(ev) {
+      ev.preventDefault();
+      const v = document.getElementById("token-input").value.trim();
+      if (!v) return;
+      adminToken = v;
+      localStorage.setItem("falacaixa_admin_token", v);
+      document.getElementById("login-overlay").style.display = "none";
+      loadDashboard();
+    }
+
     function toast(msg) {
       const el = document.getElementById("toast");
       el.textContent = msg;
@@ -300,8 +336,13 @@ def _dashboard_html() -> str:
     }
 
     async function api(url, opts = {}) {
+      opts.headers = {"X-Admin-Token": adminToken, ...(opts.headers || {})};
       const res = await fetch(url, opts);
       const data = await res.json();
+      if (res.status === 401) {
+        showLogin();
+        throw new Error(data.error || "Não autorizado");
+      }
       if (!res.ok) throw new Error(data.error || "Erro na requisição");
       return data;
     }
@@ -325,11 +366,11 @@ def _dashboard_html() -> str:
         cont.innerHTML = "<p>Nenhuma loja cadastrada.</p>";
       } else {
         cont.innerHTML = stores.map(s => {
-          const badgeClass = "badge-" + s.effective_status;
+          const badgeClass = "badge-" + esc(s.effective_status);
           const trialTxt = s.effective_status === "trial" && s.days_left !== null
             ? ` (${s.days_left}d restantes)` : "";
           const usersHtml = (s.users || []).map(u => `
-            <span class="user-pill">${u.name || "Sócio"} • ${u.phone}
+            <span class="user-pill">${esc(u.name || "Sócio")} • ${esc(u.phone)}
               <button title="Remover número" onclick="removeUser(${u.id})">×</button>
             </span>
           `).join("");
@@ -337,11 +378,11 @@ def _dashboard_html() -> str:
           return `
             <div class="store-card">
               <div class="store-top">
-                <strong>${s.store_name}</strong>
-                <span class="badge ${badgeClass}">${s.effective_status.toUpperCase()}${trialTxt}</span>
+                <strong>${esc(s.store_name)}</strong>
+                <span class="badge ${badgeClass}">${esc(s.effective_status.toUpperCase())}${trialTxt}</span>
               </div>
               <div class="meta">
-                Sistema: <b>${s.data_source_mode}</b> • PIX: <b>${s.pix_key || "-"}</b> • Notificação: <b>${s.whatsapp_notify_phone || "-"}</b>
+                Sistema: <b>${esc(s.data_source_mode)}</b> • PIX: <b>${esc(s.pix_key || "-")}</b> • Notificação: <b>${esc(s.whatsapp_notify_phone || "-")}</b>
               </div>
               <div class="users-list">${usersHtml}</div>
               <div class="actions">
@@ -350,7 +391,7 @@ def _dashboard_html() -> str:
                 <button onclick="dispatchStore(${s.id})">Enviar Resumo Agora</button>
                 ${s.data_source_mode === "folder" ? `<button onclick="uploadCsv(${s.id})">Subir CSV/XLSX</button>` : ""}
                 ${s.effective_status !== "active" ? `<button class="primary" onclick="setStatus(${s.id}, 'active')">Ativar (R$ 67)</button>` : `<button onclick="setStatus(${s.id}, 'paused')">Pausar</button>`}
-                <button class="danger" onclick="deleteStore(${s.id}, '${s.store_name.replace(/'/g, "")}')">Excluir</button>
+                <button class="danger" onclick="deleteStore(${s.id})">Excluir</button>
               </div>
             </div>
           `;
@@ -360,10 +401,10 @@ def _dashboard_html() -> str:
       const logsBody = document.getElementById("logs-body");
       logsBody.innerHTML = (data.logs || []).map(l => `
         <tr>
-          <td>${l.dispatched_at}</td>
-          <td>${l.store_name}</td>
-          <td><b>${l.status}</b></td>
-          <td>${l.summary}</td>
+          <td>${esc(l.dispatched_at)}</td>
+          <td>${esc(l.store_name)}</td>
+          <td><b>${esc(l.status)}</b></td>
+          <td>${esc(l.summary)}</td>
         </tr>
       `).join("") || "<tr><td colspan='4'>Nenhum disparo registrado ainda.</td></tr>";
     }
@@ -458,8 +499,8 @@ def _dashboard_html() -> str:
       input.click();
     }
 
-    async function deleteStore(storeId, name) {
-      if (!confirm(`Excluir a loja "${name}"?`)) return;
+    async function deleteStore(storeId) {
+      if (!confirm("Excluir esta loja? Esta ação não pode ser desfeita.")) return;
       try {
         await api(`/api/stores/${storeId}`, {method: "DELETE"});
         toast("Loja removida.");
@@ -480,16 +521,35 @@ def _dashboard_html() -> str:
 </html>"""
 
 
+MAX_UPLOAD_BYTES = 20 * 1024 * 1024  # 20 MB — planilhas de estoque não passam disso
+
+
 def create_handler(
     repo: StoreRepository,
     repo_root: Path = REPO_ROOT,
     hermes_env_path: Path = DEFAULT_HERMES_FALACAIXA_ENV,
+    admin_token: str = "",
 ) -> type[BaseHTTPRequestHandler]:
-    """Cria a classe HTTP handler ligada ao repositório informado (facilita testes)."""
+    """Cria a classe HTTP handler ligada ao repositório informado (facilita testes).
+
+    Toda rota /api/* exige o header ``X-Admin-Token`` conferindo com ``admin_token``
+    (comparação em tempo constante). O header customizado também bloqueia CSRF:
+    browsers exigem preflight CORS para enviá-lo a partir de outras origens.
+    """
 
     class AdminHandler(BaseHTTPRequestHandler):
         def log_message(self, format: str, *args: object) -> None:
             return
+
+        def _check_auth(self) -> bool:
+            provided = self.headers.get("X-Admin-Token", "")
+            if admin_token and hmac.compare_digest(provided, admin_token):
+                return True
+            self._send_json(
+                HTTPStatus.UNAUTHORIZED,
+                {"error": "Não autorizado. Informe o token de acesso do painel."},
+            )
+            return False
 
         def _send_json(self, status: int, payload: Any) -> None:
             body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
@@ -516,6 +576,8 @@ def create_handler(
                 return
 
             if path == "/api/dashboard":
+                if not self._check_auth():
+                    return
                 stores = [_serialize_store(s) for s in repo.list_stores()]
                 logs = repo.list_dispatch_logs(limit=25)
                 self._send_json(HTTPStatus.OK, {"stores": stores, "logs": logs})
@@ -525,6 +587,8 @@ def create_handler(
 
         def do_POST(self) -> None:
             path = urlparse(self.path).path
+            if not self._check_auth():
+                return
             try:
                 if path == "/api/stores":
                     data = self._read_json()
@@ -636,6 +700,12 @@ def create_handler(
                         return
                     filename = Path(self.headers.get("X-Filename", "dados.csv")).name
                     length = int(self.headers.get("Content-Length", "0"))
+                    if length > MAX_UPLOAD_BYTES:
+                        self._send_json(
+                            HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
+                            {"error": "Arquivo excede o limite de 20 MB."},
+                        )
+                        return
                     content = self.rfile.read(length)
                     dest_dir = Path(store.export_folder_path)
                     if not dest_dir.is_absolute():
@@ -652,6 +722,8 @@ def create_handler(
 
         def do_DELETE(self) -> None:
             path = urlparse(self.path).path
+            if not self._check_auth():
+                return
             m_user = re.fullmatch(r"/api/users/(\d+)", path)
             if m_user:
                 repo.remove_store_user(int(m_user.group(1)))
@@ -677,13 +749,30 @@ def main() -> None:
     parser.add_argument("--port", type=int, default=8080)
     args = parser.parse_args()
 
+    env_path = REPO_ROOT / ".env"
+    _load_env_file(env_path, override=False)
+
     repo = StoreRepository(REPO_ROOT / "data" / "falacaixa.db")
-    repo.bootstrap_from_env_if_empty(REPO_ROOT / ".env")
+    repo.bootstrap_from_env_if_empty(env_path)
     repo.sync_hermes_allowlist(DEFAULT_HERMES_FALACAIXA_ENV)
 
-    handler = create_handler(repo, repo_root=REPO_ROOT)
+    admin_token = os.getenv("FALACAIXA_ADMIN_TOKEN", "").strip()
+    ephemeral = False
+    if not admin_token:
+        # Sem token configurado, gera um temporário para esta sessão — nunca sobe aberto
+        admin_token = secrets.token_urlsafe(24)
+        ephemeral = True
+
+    handler = create_handler(repo, repo_root=REPO_ROOT, admin_token=admin_token)
     server = ThreadingHTTPServer((args.host, args.port), handler)
-    print(f"Painel Admin Fala, Caixa! rodando em http://{args.host}:{args.port}")
+    if ephemeral:
+        print(
+            "ATENÇÃO: FALACAIXA_ADMIN_TOKEN não definido no .env — token temporário gerado.\n"
+            f"Acesse: http://{args.host}:{args.port}/?token={admin_token}\n"
+            "(Para fixar, adicione FALACAIXA_ADMIN_TOKEN=<seu-token> no .env)"
+        )
+    else:
+        print(f"Painel Admin Fala, Caixa! rodando em http://{args.host}:{args.port}")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

@@ -136,7 +136,12 @@ class MultiTenantStoreTests(unittest.TestCase):
         self.assertIn("558499998888", txt)
 
     def test_admin_web_api_lifecycle(self) -> None:
-        handler = create_handler(self.repo, repo_root=self.root, hermes_env_path=self.hermes_env)
+        handler = create_handler(
+            self.repo,
+            repo_root=self.root,
+            hermes_env_path=self.hermes_env,
+            admin_token="teste-token",
+        )
         server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
         port = server.server_address[1]
         thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -144,7 +149,7 @@ class MultiTenantStoreTests(unittest.TestCase):
 
         try:
             conn = HTTPConnection("127.0.0.1", port, timeout=5)
-            # 1. Criar loja via POST /api/stores
+            # 1. Criar loja via POST /api/stores (com token)
             conn.request(
                 "POST",
                 "/api/stores",
@@ -158,7 +163,10 @@ class MultiTenantStoreTests(unittest.TestCase):
                         "margin_pct": 35,
                     }
                 ).encode("utf-8"),
-                headers={"Content-Type": "application/json"},
+                headers={
+                    "Content-Type": "application/json",
+                    "X-Admin-Token": "teste-token",
+                },
             )
             resp = conn.getresponse()
             body = resp.read().decode("utf-8")
@@ -167,12 +175,98 @@ class MultiTenantStoreTests(unittest.TestCase):
             self.assertEqual(created["store_name"], "Padaria Estrela")
             self.assertEqual(created["effective_status"], "trial")
 
-            # 2. Listar dashboard
-            conn.request("GET", "/api/dashboard")
+            # 2. Listar dashboard (com token)
+            conn.request("GET", "/api/dashboard", headers={"X-Admin-Token": "teste-token"})
             resp2 = conn.getresponse()
             dash = json.loads(resp2.read().decode("utf-8"))
             self.assertEqual(len(dash["stores"]), 1)
             self.assertEqual(dash["stores"][0]["users"][0]["phone"], "5584988887777")
+            conn.close()
+        finally:
+            server.shutdown()
+            server.server_close()
+
+    def test_admin_web_exige_token_em_todas_as_apis(self) -> None:
+        handler = create_handler(
+            self.repo,
+            repo_root=self.root,
+            hermes_env_path=self.hermes_env,
+            admin_token="segredo",
+        )
+        server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+        port = server.server_address[1]
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+
+        try:
+            # Página HTML pública (ela só carrega dados via API autenticada)
+            conn = HTTPConnection("127.0.0.1", port, timeout=5)
+            conn.request("GET", "/")
+            resp = conn.getresponse()
+            resp.read()
+            self.assertEqual(resp.status, 200)
+            conn.close()
+
+            # API sem token -> 401
+            conn = HTTPConnection("127.0.0.1", port, timeout=5)
+            conn.request("GET", "/api/dashboard")
+            resp = conn.getresponse()
+            resp.read()
+            self.assertEqual(resp.status, 401)
+            conn.close()
+
+            # API com token errado -> 401
+            conn = HTTPConnection("127.0.0.1", port, timeout=5)
+            conn.request("GET", "/api/dashboard", headers={"X-Admin-Token": "errado"})
+            resp = conn.getresponse()
+            resp.read()
+            self.assertEqual(resp.status, 401)
+            conn.close()
+
+            # POST sem token -> 401 (bloqueia CSRF de outros sites)
+            conn = HTTPConnection("127.0.0.1", port, timeout=5)
+            conn.request(
+                "POST",
+                "/api/stores",
+                body=b"{}",
+                headers={"Content-Type": "text/plain"},
+            )
+            resp = conn.getresponse()
+            resp.read()
+            self.assertEqual(resp.status, 401)
+            conn.close()
+        finally:
+            server.shutdown()
+            server.server_close()
+
+    def test_admin_web_upload_rejeita_arquivo_gigante(self) -> None:
+        store = self.repo.create_store(
+            store_name="Loja Upload",
+            data_source_mode="folder",
+            initial_users=[("Joao", "5584999998888", "owner")],
+        )
+        handler = create_handler(
+            self.repo,
+            repo_root=self.root,
+            hermes_env_path=self.hermes_env,
+            admin_token="segredo",
+        )
+        server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+        port = server.server_address[1]
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+
+        try:
+            # Declara Content-Length acima de 20 MB; o servidor rejeita sem ler o corpo
+            conn = HTTPConnection("127.0.0.1", port, timeout=5)
+            conn.putrequest("POST", f"/api/stores/{store.id}/upload")
+            conn.putheader("X-Admin-Token", "segredo")
+            conn.putheader("X-Filename", "grande.csv")
+            conn.putheader("Content-Length", str(21 * 1024 * 1024))
+            conn.endheaders()
+            resp = conn.getresponse()
+            resp.read()
+            self.assertEqual(resp.status, 413)
             conn.close()
         finally:
             server.shutdown()
