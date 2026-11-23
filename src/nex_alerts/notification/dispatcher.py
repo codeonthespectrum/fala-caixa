@@ -27,6 +27,7 @@ from nex_alerts.notification.formatter import (
     format_daily_digest,
     format_individual_fiado_message,
 )
+from nex_alerts.phone_identity import candidatos_envio, normalizar
 
 
 def _json_default_serializer(obj: Any) -> Any:
@@ -38,12 +39,12 @@ def _json_default_serializer(obj: Any) -> Any:
 
 
 def normalize_phone_number(phone: str) -> str:
-    """Mantém apenas dígitos no telefone (ex: '+55 (84) 99999-9999' -> '5584999999999')."""
-    digits = re.sub(r"\D+", "", phone or "")
-    # Se o usuário digitou DDD + número (10 ou 11 dígitos no Brasil) sem DDI 55, adiciona 55
-    if len(digits) in (10, 11) and not digits.startswith("55"):
-        digits = f"55{digits}"
-    return digits
+    """Mantém apenas dígitos no telefone (ex: '+55 (84) 99999-9999' -> '5584999999999').
+
+    Delegada canônica para `nex_alerts.phone_identity.normalizar` (mantida por
+    compatibilidade com os pontos que já importam daqui).
+    """
+    return normalizar(phone)
 
 
 @dataclass(frozen=True)
@@ -120,15 +121,7 @@ class NotificationDispatcher:
         """Resolve o JID (@s.whatsapp.net ou @lid) usando a sessão local do Hermes Agent (~/.hermes/whatsapp/session)."""
         if "@" in phone:
             return phone
-        candidates = [phone]
-        if phone.startswith("55") and len(phone) == 13 and phone[4] == "9":
-            # Para DDDs >= 30 no Brasil, o WhatsApp Baileys geralmente armazena 12 dígitos (sem o 9º dígito)
-            if int(phone[2:4]) >= 30:
-                candidates = [phone[:4] + phone[5:], phone]
-            else:
-                candidates = [phone, phone[:4] + phone[5:]]
-        elif phone.startswith("55") and len(phone) == 12:
-            candidates = [phone, phone[:4] + "9" + phone[4:]]
+        candidates = candidatos_envio(phone)
 
         session_dirs = [
             Path.home() / ".hermes" / "profiles" / "falacaixa" / "whatsapp" / "session",
@@ -174,12 +167,7 @@ class NotificationDispatcher:
         if phone in self._greenapi_chat_id_cache:
             return self._greenapi_chat_id_cache[phone]
 
-        candidates = [phone]
-        # No Brasil (55 + 2 dígitos DDD): se tem 13 dígitos (com 9), testa também com 12 (sem 9) e vice-versa
-        if phone.startswith("55") and len(phone) == 13 and phone[4] == "9":
-            candidates.append(phone[:4] + phone[5:])
-        elif phone.startswith("55") and len(phone) == 12:
-            candidates.append(phone[:4] + "9" + phone[4:])
+        candidates = candidatos_envio(phone)
 
         check_url = (
             f"{base}/waInstance{self.config.greenapi_id_instance}"
@@ -207,11 +195,8 @@ class NotificationDispatcher:
             except Exception:
                 continue
 
-        # Fallback: para DDDs >= 30 no Brasil, o ID interno do WhatsApp costuma ter 12 dígitos
-        if phone.startswith("55") and len(phone) == 13 and int(phone[2:4]) >= 30:
-            fallback_id = f"{phone[:4]}{phone[5:]}@c.us"
-        else:
-            fallback_id = f"{phone}@c.us"
+        # Fallback: o primeiro candidato já respeita a regra do DDD >= 30
+        fallback_id = f"{candidates[0]}@c.us" if candidates else f"{phone}@c.us"
         self._greenapi_chat_id_cache[phone] = fallback_id
         return fallback_id
 

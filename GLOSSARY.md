@@ -37,6 +37,13 @@ houver) e o estado da assinatura. Nunca adivinha: quando não reconhece o
 chamador, nega o atendimento com orientação em vez de escolher uma Loja
 qualquer.
 
+## Identidade de Telefone
+
+A regra única de telefonia brasileira do produto: normalização de números,
+variantes com/sem o 9º dígito e com/sem DDI 55 (para reconhecer quem chama)
+e a ordem de candidatos de envio nos gateways de WhatsApp (DDDs a partir de
+30 costumam ter identificador interno sem o 9º dígito).
+
 ## Fiado
 
 Venda a prazo anotada na caderneta/ERP da Loja, com cliente, valor e

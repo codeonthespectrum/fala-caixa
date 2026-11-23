@@ -204,20 +204,13 @@ def _get_cached_customer_debts(cfg: AppConfig, today: date) -> list[Any]:
 
 
 def _phone_variants(phone: str) -> set[str]:
-    """Gera variantes com e sem o 9º dígito brasileiro para comparação robusta."""
-    digits = normalize_phone_number(phone)
-    if not digits:
-        return set()
-    variants = {digits}
-    if digits.startswith("55") and len(digits) == 13 and digits[4] == "9":
-        variants.add(digits[:4] + digits[5:])
-    elif digits.startswith("55") and len(digits) == 12:
-        variants.add(digits[:4] + "9" + digits[4:])
-    # Também adiciona sem o DDI 55
-    for v in list(variants):
-        if v.startswith("55") and len(v) in (12, 13):
-            variants.add(v[2:])
-    return variants
+    """Gera variantes com e sem o 9º dígito brasileiro para comparação robusta.
+
+    Delegada canônica para `nex_alerts.phone_identity.variantes`.
+    """
+    from nex_alerts.phone_identity import variantes
+
+    return variantes(phone, incluir_sem_ddi=True)
 
 
 def _detect_caller_phone_candidates() -> set[str]:

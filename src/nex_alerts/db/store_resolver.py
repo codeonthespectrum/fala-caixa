@@ -18,8 +18,8 @@ from __future__ import annotations
 import unicodedata
 from typing import Iterable
 
-from nex_alerts.db.store_repository import StoreRecord, StoreRepository, phone_variants
-from nex_alerts.notification.dispatcher import normalize_phone_number
+from nex_alerts.db.store_repository import StoreRecord, StoreRepository
+from nex_alerts.phone_identity import variantes
 
 
 class StoreResolutionError(RuntimeError):
@@ -55,12 +55,7 @@ def _expand_candidates(caller_candidates: Iterable[str]) -> set[str]:
     """Normaliza os candidatos do chamador: variantes com/sem 9º dígito e com/sem DDI 55."""
     expanded: set[str] = set()
     for c in caller_candidates:
-        expanded |= phone_variants(c)
-        digits = normalize_phone_number(c)
-        if digits:
-            expanded.add(digits)
-            if digits.startswith("55") and len(digits) in (12, 13):
-                expanded.add(digits[2:])
+        expanded |= variantes(c, incluir_sem_ddi=True)
     return expanded
 
 
@@ -68,13 +63,9 @@ def _store_phone_variants(store: StoreRecord) -> set[str]:
     """Todos os telefones que representam a Loja: membros + telefone de notificação (compat)."""
     variants: set[str] = set()
     for user in store.users:
-        user_vars = phone_variants(user.phone)
-        for v in list(user_vars):
-            if v.startswith("55") and len(v) in (12, 13):
-                user_vars.add(v[2:])
-        variants |= user_vars
+        variants |= variantes(user.phone, incluir_sem_ddi=True)
     if store.whatsapp_notify_phone:
-        variants |= phone_variants(store.whatsapp_notify_phone)
+        variants |= variantes(store.whatsapp_notify_phone)
     return variants
 
 
@@ -93,7 +84,7 @@ class StoreResolver:
         self.repo = repo
         self._admin_variants: set[str] = set()
         for phone in admin_phones:
-            self._admin_variants |= phone_variants(phone)
+            self._admin_variants |= variantes(phone)
 
     def autorizar(
         self,

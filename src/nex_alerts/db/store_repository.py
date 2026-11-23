@@ -18,6 +18,7 @@ from typing import Iterable
 
 from nex_alerts.config import AppConfig, _load_env_file
 from nex_alerts.notification.dispatcher import normalize_phone_number
+from nex_alerts.phone_identity import variantes
 
 DEFAULT_HERMES_FALACAIXA_ENV = Path.home() / ".hermes" / "profiles" / "falacaixa" / ".env"
 DEFAULT_ADMIN_BASE_PHONES = (
@@ -28,16 +29,12 @@ DEFAULT_ADMIN_BASE_PHONES = (
 
 
 def phone_variants(phone: str) -> set[str]:
-    """Gera variantes com e sem o 9º dígito brasileiro para comparação e allowlist."""
-    digits = normalize_phone_number(phone)
-    if not digits:
-        return set()
-    variants = {digits}
-    if digits.startswith("55") and len(digits) == 13 and digits[4] == "9":
-        variants.add(digits[:4] + digits[5:])
-    elif digits.startswith("55") and len(digits) == 12:
-        variants.add(digits[:4] + "9" + digits[4:])
-    return variants
+    """Gera variantes com e sem o 9º dígito brasileiro para comparação e allowlist.
+
+    Delegada canônica para `nex_alerts.phone_identity.variantes` (mantida por
+    compatibilidade com os pontos que já importam daqui).
+    """
+    return variantes(phone)
 
 
 def _slugify(value: str) -> str:
@@ -392,20 +389,12 @@ class StoreRepository:
         # Normaliza todos os candidatos incluindo variantes sem DDI 55 para match robusto
         expanded_candidates: set[str] = set()
         for c in caller_candidates:
-            expanded_candidates |= phone_variants(c)
-            digits = normalize_phone_number(c)
-            if digits:
-                expanded_candidates.add(digits)
-                if digits.startswith("55") and len(digits) in (12, 13):
-                    expanded_candidates.add(digits[2:])
+            expanded_candidates |= variantes(c, incluir_sem_ddi=True)
 
         stores = self.list_stores()
         for store in stores:
             for user in store.users:
-                user_vars = phone_variants(user.phone)
-                for v in list(user_vars):
-                    if v.startswith("55") and len(v) in (12, 13):
-                        user_vars.add(v[2:])
+                user_vars = variantes(user.phone, incluir_sem_ddi=True)
                 if expanded_candidates & user_vars:
                     eff = store.effective_status(reference_today=reference_today)
                     if eff in {"trial", "active"}:
